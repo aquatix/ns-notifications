@@ -7,6 +7,7 @@ import pylibmc
 #import simplejson as json
 import __main__ as main
 
+import settings
 
 mc = pylibmc.Client(['127.0.0.1'], binary=True, behaviors={'tcp_nodelay': True, 'ketama': True})
 
@@ -23,14 +24,18 @@ if __name__ == '__main__':
     Notifier is ran standalone, rock and roll
     """
 
-    stations = []
-    with open('stations.xml') as fd:
-        stations = ns_api.parse_stations(fd.read())
+    nsapi = ns_api.NSAPI(settings.username, settings.apikey)
 
-    departures = []
-    with open('examples.xml') as fd:
-        departures = ns_api.parse_departures(fd.read())
+    nsapi.get_stations()
 
-    trips = []
-    with open('reismogelijkheden.xml') as fd:
-        trips = ns_api.parse_trips(fd.read())
+    #stations = []
+    #with open('stations.xml') as fd:
+    #    stations = nsapi.parse_stations(fd.read())
+
+    #departures = []
+    #with open('examples.xml') as fd:
+    #    departures = nsapi.parse_departures(fd.read())
+
+    #trips = []
+    #with open('reismogelijkheden.xml') as fd:
+    #    trips = na_api.NSAPI.parse_trips(fd.read())
