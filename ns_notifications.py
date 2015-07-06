@@ -23,6 +23,10 @@ if __name__ == '__main__':
     Notifier is ran standalone, rock and roll
     """
 
+    stations = []
+    with open('stations.xml') as fd:
+        stations = ns_api.parse_stations(fd.read())
+
     departures = []
     with open('examples.xml') as fd:
         departures = ns_api.parse_departures(fd.read())
