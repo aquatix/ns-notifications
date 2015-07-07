@@ -3,6 +3,7 @@ NS trip notifier
 """
 from ns_api import ns_api
 from pushbullet import PushBullet
+import pushbullet
 import pylibmc
 #import simplejson as json
 import __main__ as main
@@ -61,6 +62,9 @@ if __name__ == '__main__':
 
     if settings.notification_type == 'pb':
         api_key = settings.pushbullet_key
-        p = PushBullet(api_key)
+        try:
+            p = PushBullet(api_key)
+        except pushbullet.errors.InvalidKeyError:
+            print('Invalid PushBullet key')
         logger.info('sending delays to device with id %s', (settings.device_id))
         p.pushNote(settings.device_id, 'NS Vertraging', "\n\n".join(delays_tosend))
