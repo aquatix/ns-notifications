@@ -39,6 +39,9 @@ if __name__ == '__main__':
 
     nsapi = ns_api.NSAPI(settings.username, settings.apikey)
 
+    with open('storingen.xml') as fd:
+        disruptions = nsapi.parse_disruptions(fd.read())
+
     stations = []
     try:
         stations = nsapi.get_stations()
