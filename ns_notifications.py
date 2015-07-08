@@ -14,6 +14,13 @@ import settings
 mc = pylibmc.Client(['127.0.0.1'], binary=True, behaviors={'tcp_nodelay': True, 'ketama': True})
 
 
+def list_to_json(source_list):
+    result = []
+    for item in source_list:
+        result.append(item.to_json())
+    return result
+
+
 #if hasattr(main, '__file__'):
 #    """
 #    Running in interactive mode in the Python shell
@@ -48,20 +55,27 @@ if __name__ == '__main__':
     except requests.exceptions.ConnectionError:
         print('Something went wrong connecting to the API')
 
+    stations_json = list_to_json(stations)
+
     # Cache the stations
-    mc['stations_a'] = stations
+    mc['stations_a'] = stations_json
+    mc['station_1'] = stations_json[0]
+
+    print(mc['station_1'])
 
     #stations = []
     #with open('stations.xml') as fd:
     #    stations = nsapi.parse_stations(fd.read())
 
-    #departures = []
-    #with open('examples.xml') as fd:
-    #    departures = nsapi.parse_departures(fd.read())
+    print('-- departures --')
+    departures = []
+    with open('examples.xml') as fd:
+        departures = nsapi.parse_departures(fd.read())
 
-    #trips = []
-    #with open('reismogelijkheden.xml') as fd:
-    #    trips = na_api.NSAPI.parse_trips(fd.read())
+    print('-- trips --')
+    trips = []
+    with open('reismogelijkheden.xml') as fd:
+        trips = nsapi.parse_trips(fd.read())
 
     if settings.notification_type == 'pb':
         api_key = settings.pushbullet_key
@@ -69,5 +83,5 @@ if __name__ == '__main__':
             p = PushBullet(api_key)
         except pushbullet.errors.InvalidKeyError:
             print('Invalid PushBullet key')
-        logger.info('sending delays to device with id %s', (settings.device_id))
+        #logger.info('sending delays to device with id %s', (settings.device_id))
         p.pushNote(settings.device_id, 'NS Vertraging', "\n\n".join(delays_tosend))
