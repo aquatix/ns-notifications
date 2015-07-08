@@ -8,6 +8,7 @@ import pylibmc
 #import simplejson as json
 import __main__ as main
 import requests
+import sys
 
 import settings
 
@@ -63,9 +64,16 @@ if __name__ == '__main__':
 
     print(mc['station_1'])
 
+    station1 = ns_api.Station()
+    station1.from_json(mc['station_1'])
+    print(station1 == stations[0])
+    print(station1 == stations[1])
+
     #stations = []
     #with open('stations.xml') as fd:
     #    stations = nsapi.parse_stations(fd.read())
+
+    sys.exit(0)
 
     print('-- departures --')
     departures = []
