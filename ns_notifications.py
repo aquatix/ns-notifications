@@ -15,13 +15,6 @@ import settings
 mc = pylibmc.Client(['127.0.0.1'], binary=True, behaviors={'tcp_nodelay': True, 'ketama': True})
 
 
-def list_to_json(source_list):
-    result = []
-    for item in source_list:
-        result.append(item.to_json())
-    return result
-
-
 #if hasattr(main, '__file__'):
 #    """
 #    Running in interactive mode in the Python shell
@@ -47,27 +40,35 @@ if __name__ == '__main__':
 
     nsapi = ns_api.NSAPI(settings.username, settings.apikey)
 
-    with open('storingen.xml') as fd:
-        disruptions = nsapi.parse_disruptions(fd.read())
+    #with open('storingen.xml') as fd:
+    #    disruptions = nsapi.parse_disruptions(fd.read())
+    disruptions = nsapi.get_disruptions()
 
-    stations = []
     try:
-        stations = nsapi.get_stations()
-    except requests.exceptions.ConnectionError:
-        print('Something went wrong connecting to the API')
+        prev_disruptions = mc['prev_disruptions']
+    except KeyError:
+        prev_disruptions = {'unplanned': [], 'planned': []}
 
-    stations_json = list_to_json(stations)
+    prev_disruptions['unplanned'] = ns_api.list_from_json(prev_disruptions['unplanned'])
+    prev_disruptions['planned'] = ns_api.list_from_json(prev_disruptions['planned'])
 
-    # Cache the stations
-    mc['stations_a'] = stations_json
-    mc['station_1'] = stations_json[0]
+    new_or_changed_planned = ns_api.list_changes(prev_disruptions['unplanned'], disruptions['unplanned'])
+    print(new_or_changed_planned)
 
-    print(mc['station_1'])
+    sys.exit(0)
 
-    station1 = ns_api.Station()
-    station1.from_json(mc['station_1'])
-    print(station1 == stations[0])
-    print(station1 == stations[1])
+    try:
+        stations = mc['stations']
+    except KeyError:
+        stations = []
+        try:
+            stations = nsapi.get_stations()
+        except requests.exceptions.ConnectionError:
+            print('Something went wrong connecting to the API')
+
+        stations_json = ns_api.list_to_json(stations)
+        # Cache the stations
+        mc['stations'] = stations_json
 
     #stations = []
     #with open('stations.xml') as fd:
