@@ -7,6 +7,7 @@ import pushbullet
 #import pylibmc
 from pymemcache.client import Client as MemcacheClient
 #import simplejson as json
+import json
 import __main__ as main
 import requests
 import sys
@@ -29,7 +30,7 @@ def json_deserializer(key, value, flags):
     raise Exception("Unknown serialization format")
 
 
-mc = MemcacheClient('127.0.0.1', serializer=json_serializer,
+mc = MemcacheClient(('127.0.0.1', 11211), serializer=json_serializer,
         deserializer=json_deserializer)
 
 
@@ -46,12 +47,13 @@ if __name__ == '__main__':
     """
 
 
-    should_run = True
-    if 'nsapi_run' in mc:
-        should_run = mc['nsapi_run']
-    else:
+    should_run = mc.get('nsapi_run')
+    if should_run == None:
+        should_run = True
         #logger.info('no run tuple in memcache, creating')
-        mc['nsapi_run'] = should_run
+        mc.set('nsapi_run', should_run)
+
+    print should_run
 
     if not should_run:
         sys.exit(0)
@@ -62,10 +64,8 @@ if __name__ == '__main__':
     #    disruptions = nsapi.parse_disruptions(fd.read())
     disruptions = nsapi.get_disruptions()
 
-    try:
-        #prev_disruptions = mc['prev_disruptions']
-        prev_disruptions = mc.get['prev_disruptions']
-    except KeyError:
+    prev_disruptions = mc.get('prev_disruptions')
+    if prev_disruptions == None:
         prev_disruptions = {'unplanned': [], 'planned': []}
 
     prev_disruptions['unplanned'] = ns_api.list_from_json(prev_disruptions['unplanned'])
