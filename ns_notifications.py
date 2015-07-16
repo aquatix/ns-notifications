@@ -4,7 +4,8 @@ NS trip notifier
 from ns_api import ns_api
 from pushbullet import PushBullet
 import pushbullet
-import pylibmc
+#import pylibmc
+from pymemcache.client import Client as MemcacheClient
 #import simplejson as json
 import __main__ as main
 import requests
@@ -12,7 +13,24 @@ import sys
 
 import settings
 
-mc = pylibmc.Client(['127.0.0.1'], binary=True, behaviors={'tcp_nodelay': True, 'ketama': True})
+#mc = pylibmc.Client(['127.0.0.1'], binary=True, behaviors={'tcp_nodelay': True, 'ketama': True})
+
+
+def json_serializer(key, value):
+     if type(value) == str:
+         return value, 1
+     return json.dumps(value), 2
+
+def json_deserializer(key, value, flags):
+    if flags == 1:
+        return value
+    if flags == 2:
+        return json.loads(value)
+    raise Exception("Unknown serialization format")
+
+
+mc = MemcacheClient('127.0.0.1', serializer=json_serializer,
+        deserializer=json_deserializer)
 
 
 #if hasattr(main, '__file__'):
@@ -45,20 +63,26 @@ if __name__ == '__main__':
     disruptions = nsapi.get_disruptions()
 
     try:
-        prev_disruptions = mc['prev_disruptions']
+        #prev_disruptions = mc['prev_disruptions']
+        prev_disruptions = mc.get['prev_disruptions']
     except KeyError:
         prev_disruptions = {'unplanned': [], 'planned': []}
 
     prev_disruptions['unplanned'] = ns_api.list_from_json(prev_disruptions['unplanned'])
     prev_disruptions['planned'] = ns_api.list_from_json(prev_disruptions['planned'])
 
-    new_or_changed_planned = ns_api.list_changes(prev_disruptions['unplanned'], disruptions['unplanned'])
-    print(new_or_changed_planned)
+    new_or_changed_unplanned = ns_api.list_diff(prev_disruptions['unplanned'], disruptions['unplanned'])
+    print(new_or_changed_unplanned)
 
-    sys.exit(0)
+    unchanged_unplanned = ns_api.list_same(prev_disruptions['unplanned'], disruptions['unplanned'])
+
+    # Update the cached list with the current information
+    #mc.set('prev_disruptions', 
+
 
     try:
-        stations = mc['stations']
+        #stations = mc['stations']
+        stations = mc.get('stations')
     except KeyError:
         stations = []
         try:
@@ -68,7 +92,10 @@ if __name__ == '__main__':
 
         stations_json = ns_api.list_to_json(stations)
         # Cache the stations
-        mc['stations'] = stations_json
+        #mc['stations'] = stations_json
+        mc.set('stations', stations_json)
+
+    sys.exit(0)
 
     #stations = []
     #with open('stations.xml') as fd:
