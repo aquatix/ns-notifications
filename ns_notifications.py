@@ -18,9 +18,12 @@ import settings
 
 
 def json_serializer(key, value):
-     if type(value) == str:
-         return value, 1
-     return json.dumps(value), 2
+    if type(value) == str:
+        return value, 1
+    #if issubclass(value, ns_api.BaseObject):
+    #    print ("instance of NS-API object")
+    #    return value.to_json(), 3
+    return json.dumps(value), 2
 
 def json_deserializer(key, value, flags):
     if flags == 1:
@@ -46,39 +49,59 @@ if __name__ == '__main__':
     Notifier is ran standalone, rock and roll
     """
 
-
     should_run = mc.get('nsapi_run')
     if should_run == None:
         should_run = True
         #logger.info('no run tuple in memcache, creating')
         mc.set('nsapi_run', should_run)
 
-    print should_run
+    print(should_run)
 
     if not should_run:
         sys.exit(0)
 
+    errors = []
     nsapi = ns_api.NSAPI(settings.username, settings.apikey)
 
     #with open('storingen.xml') as fd:
     #    disruptions = nsapi.parse_disruptions(fd.read())
-    disruptions = nsapi.get_disruptions()
+    try:
+        disruptions = nsapi.get_disruptions()
 
-    prev_disruptions = mc.get('prev_disruptions')
-    if prev_disruptions == None:
-        prev_disruptions = {'unplanned': [], 'planned': []}
+        prev_disruptions = mc.get('prev_disruptions')
+        if prev_disruptions == None:
+            prev_disruptions = {'unplanned': [], 'planned': []}
 
-    prev_disruptions['unplanned'] = ns_api.list_from_json(prev_disruptions['unplanned'])
-    prev_disruptions['planned'] = ns_api.list_from_json(prev_disruptions['planned'])
+        prev_disruptions['unplanned'] = ns_api.list_from_json(prev_disruptions['unplanned'])
+        prev_disruptions['planned'] = ns_api.list_from_json(prev_disruptions['planned'])
 
-    new_or_changed_unplanned = ns_api.list_diff(prev_disruptions['unplanned'], disruptions['unplanned'])
-    print(new_or_changed_unplanned)
+        new_or_changed_unplanned = ns_api.list_diff(prev_disruptions['unplanned'], disruptions['unplanned'])
+        print(new_or_changed_unplanned)
 
-    unchanged_unplanned = ns_api.list_same(prev_disruptions['unplanned'], disruptions['unplanned'])
+        unchanged_unplanned = ns_api.list_same(prev_disruptions['unplanned'], disruptions['unplanned'])
 
-    # Update the cached list with the current information
-    #mc.set('prev_disruptions', 
+        prev_unplanned = new_or_changed_unplanned + unchanged_unplanned
 
+
+
+        #new_or_changed_planned = ns_api.list_diff(prev_disruptions['planned'], disruptions['planned'])
+        #print(new_or_changed_planned)
+        #for plan in new_or_changed_planned: 
+        #    print plan.key
+        #    print plan.message
+        #    print "------"
+
+        #unchanged_planned = ns_api.list_same(prev_disruptions['planned'], disruptions['planned'])
+
+        #prev_planned = new_or_changed_planned + unchanged_planned
+
+        # Update the cached list with the current information
+        #prev_unplanned_json = ns_api.list_to_json(prev_unplanned)
+        mc.set('prev_disruptions', ns_api.list_to_json(prev_unplanned))
+
+    except requests.exceptions.ConnectionError as e:
+        print('[ERROR] connectionerror doing disruptions')
+        errors.append(('Exception doing disruptions', e))
 
     try:
         #stations = mc['stations']
@@ -94,6 +117,18 @@ if __name__ == '__main__':
         # Cache the stations
         #mc['stations'] = stations_json
         mc.set('stations', stations_json)
+
+
+    try:
+        departures = []
+        departures = nsapi.get_departures('Heemskerk')
+        print departures
+
+    except requests.exceptions.ConnectionError as e:
+        print('[ERROR] connectionerror doing departures')
+        errors.append(('Exception doing departures', e))
+
+    print errors
 
     sys.exit(0)
 
