@@ -97,7 +97,7 @@ if __name__ == '__main__':
 
         # Update the cached list with the current information
         #prev_unplanned_json = ns_api.list_to_json(prev_unplanned)
-        mc.set('prev_disruptions', ns_api.list_to_json(prev_unplanned))
+        #mc.set('prev_disruptions', ns_api.list_to_json(prev_unplanned))
 
     except requests.exceptions.ConnectionError as e:
         print('[ERROR] connectionerror doing disruptions')
@@ -118,6 +118,35 @@ if __name__ == '__main__':
         #mc['stations'] = stations_json
         mc.set('stations', stations_json)
 
+    try:
+        trips = []
+
+        #for route in settings.routes:
+        #    print route['time'] + ' ' + route['departure']
+        #    trips = nsapi.get_trips(route['time'], route['departure'], route['keyword'], route['destination'])
+
+        route = settings.routes[0]
+        print route['time'] + ' ' + route['departure']
+        trips = nsapi.get_trips(route['time'], route['departure'], route['keyword'], route['destination'], True)
+        optimal_found = False
+        for trip in trips:
+            if trip.is_optimal:
+                print "Optimal found:"
+                print trip
+                optimal_found = True
+                print 'Delay on this trip: ' + str(trip.delay)
+
+        if not optimal_found:
+            print "Optimal not found. Alert?"
+            # TODO: Get the trip before and the one after route['time']?
+
+    except requests.exceptions.ConnectionError as e:
+        print('[ERROR] connectionerror doing trips')
+        errors.append(('Exception doing trips', e))
+
+    print errors
+
+    sys.exit(0)
 
     try:
         departures = []
@@ -128,9 +157,7 @@ if __name__ == '__main__':
         print('[ERROR] connectionerror doing departures')
         errors.append(('Exception doing departures', e))
 
-    print errors
 
-    sys.exit(0)
 
     #stations = []
     #with open('stations.xml') as fd:
