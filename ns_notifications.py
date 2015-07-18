@@ -128,22 +128,19 @@ if __name__ == '__main__':
         route = settings.routes[0]
         print route['time'] + ' ' + route['departure']
         trips = nsapi.get_trips(route['time'], route['departure'], route['keyword'], route['destination'], True)
-        optimal_found = False
-        for trip in trips:
-            if trip.is_optimal:
-                print "Optimal found:"
-                print trip
-                optimal_found = True
-                print 'Delay on this trip: ' + str(trip.delay)
+        optimal_trip = ns_api.Trip.get_optimal(trips, route['time'])
 
-        if not optimal_found:
+        if not optimal_trip:
             print "Optimal not found. Alert?"
             # TODO: Get the trip before and the one after route['time']?
+
+        print optimal_trip
 
     except requests.exceptions.ConnectionError as e:
         print('[ERROR] connectionerror doing trips')
         errors.append(('Exception doing trips', e))
 
+    print "errors:"
     print errors
 
     sys.exit(0)
