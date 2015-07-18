@@ -1,5 +1,5 @@
 argparse==1.2.1
 #ns-api
 pushbullet.py==0.8.1
-pylibmc==1.5.0
+pymemcache==1.2.9
 wsgiref==0.1.2
