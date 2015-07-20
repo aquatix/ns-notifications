@@ -110,6 +110,11 @@ def get_changed_trips(mc, routes, userkey):
         today_date = datetime.datetime.now().strftime('%d-%m-%Y')
         current_time = datetime.datetime.now()
 
+        prev_trips = mc.get(str(userkey) + '_trips')
+        if prev_trips == None:
+            prev_trips = []
+        prev_trips = ns_api.list_from_json(prev_trips)
+        #print prev_trips
         trips = []
 
         for route in routes:
@@ -132,6 +137,8 @@ def get_changed_trips(mc, routes, userkey):
             trips.append(optimal_trip)
             print(optimal_trip)
 
+        new_or_changed_trips = ns_api.list_diff(prev_trips, trips)
+
         mc.set(str(userkey) + '_trips', ns_api.list_to_json(trips))
 
     except requests.exceptions.ConnectionError as e:
@@ -139,7 +146,7 @@ def get_changed_trips(mc, routes, userkey):
         errors.append(('Exception doing trips', e))
         trips = []
 
-    return trips
+    return new_or_changed_trips
 
 
 def get_changed_departures(mc, station, userkey):
