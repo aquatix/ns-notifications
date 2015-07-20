@@ -1,0 +1,4 @@
+#!/bin/bash
+source /usr/share/virtualenvwrapper/virtualenvwrapper.sh
+workon ns-notifications
+python ns_notifications.py
