@@ -40,6 +40,12 @@ def format_disruption(disruption):
     return {'header': 'Traject: ' + disruption.line, 'message': disruption.reason + "\n" + disruption.message}
 
 
+def format_trip(trip):
+    trip_delay = trip.delay
+    print trip_delay
+    return {'header': '', 'message': ''}
+
+
 def get_stations(mc):
     """
     Get the list of all stations, put in cache if not already there
@@ -228,4 +234,9 @@ elif __name__ == '__main__':
             for disruption in changed_disruptions:
                 message = format_disruption(disruption)
                 print message
-                p.pushNote(settings.device_id, message['header'], message['message'])
+                p.push_note(message['header'], message['message'], settings.device_id)
+        if trips:
+            for trip in trips:
+                message = format_trip(trip)
+                print message
+                p.push_note(message['header'], message['message'], settings.device_id)
