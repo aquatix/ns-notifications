@@ -36,6 +36,10 @@ def json_deserializer(key, value, flags):
     raise Exception("Unknown serialization format")
 
 
+def format_disruption(disruption):
+    return {'header': 'Traject: ' + disruption.line, 'message': disruption.reason + "\n" + disruption.message}
+
+
 def get_stations(mc):
     """
     Get the list of all stations, put in cache if not already there
@@ -77,6 +81,8 @@ def get_changed_disruptions(mc, disruptions):
 
         prev_unplanned = new_or_changed_unplanned + unchanged_unplanned
 
+        # Planned disruptions don't have machine-readable date/time and route information, so
+        # we skip planned disruptions for this moment
         #new_or_changed_planned = ns_api.list_diff(prev_disruptions['planned'], disruptions['planned'])
         #print(new_or_changed_planned)
         #for plan in new_or_changed_planned:
@@ -85,7 +91,6 @@ def get_changed_disruptions(mc, disruptions):
         #    print "------"
 
         #unchanged_planned = ns_api.list_same(prev_disruptions['planned'], disruptions['planned'])
-
         #prev_planned = new_or_changed_planned + unchanged_planned
 
         # Update the cached list with the current information
@@ -99,7 +104,7 @@ def get_changed_disruptions(mc, disruptions):
     return new_or_changed_unplanned
 
 
-def get_changed_trips(mc, userkey):
+def get_changed_trips(mc, routes, userkey):
     try:
         today = datetime.datetime.now().strftime('%d-%m')
         today_date = datetime.datetime.now().strftime('%d-%m-%Y')
@@ -107,36 +112,25 @@ def get_changed_trips(mc, userkey):
 
         trips = []
 
-        #for route in settings.routes:
-        #    if current_time > route_time and delta.total_seconds() > MAX_TIME_PAST:
-        #        # the route was too long ago ago, lets skip it
-        #        logger.info('route %s was too long ago, skipped', route)
-        #        continue
-        #    if current_time < route_time and abs(delta.total_seconds()) > MAX_TIME_FUTURE:
-        #        # the route is too much in the future, lets skip it
-        #        logger.info('route %s was too much in the future, skipped', route)
-        #        continue
-        #        print route['time'] + ' ' + route['departure']
-        #    trips = nsapi.get_trips(route['time'], route['departure'], route['keyword'], route['destination'])
-
-        route = settings.routes[0]
-        route_time = datetime.datetime.strptime(today_date + " " + route['time'], "%d-%m-%Y %H:%M")
-        delta = current_time - route_time
-        print route['time'] + ' ' + route['departure']
-        if current_time > route_time and delta.total_seconds() > MAX_TIME_PAST:
-            print "TOO LATE"
-        if current_time < route_time and abs(delta.total_seconds()) > MAX_TIME_FUTURE:
-            print "TOO EARLY"
-        trips = nsapi.get_trips(route['time'], route['departure'], route['keyword'], route['destination'], True)
-        optimal_trip = ns_api.Trip.get_optimal(trips, route['time'])
-
-        print ns_api.list_to_json(trips)
-
-        if not optimal_trip:
-            print "Optimal not found. Alert?"
-            # TODO: Get the trip before and the one after route['time']?
-
-        print optimal_trip
+        for route in routes:
+            route_time = datetime.datetime.strptime(today_date + " " + route['time'], "%d-%m-%Y %H:%M")
+            delta = current_time - route_time
+            #if current_time > route_time and delta.total_seconds() > MAX_TIME_PAST:
+            #    # the route was too long ago ago, lets skip it
+            #    #logger.info('route %s was too long ago, skipped', route)
+            #    continue
+            if current_time < route_time and abs(delta.total_seconds()) > MAX_TIME_FUTURE:
+                # the route is too much in the future, lets skip it
+                #logger.info('route %s was too much in the future, skipped', route)
+                continue
+                print route['time'] + ' ' + route['departure']
+            current_trips = nsapi.get_trips(route['time'], route['departure'], route['keyword'], route['destination'], True)
+            optimal_trip = ns_api.Trip.get_optimal(current_trips, route['time'])
+            if not optimal_trip:
+                print "Optimal not found. Alert?"
+                # TODO: Get the trip before and the one after route['time']?
+            trips.append(optimal_trip)
+            print(optimal_trip)
 
         mc.set(str(userkey) + '_trips', ns_api.list_to_json(trips))
 
@@ -210,7 +204,8 @@ elif __name__ == '__main__':
 
 
     ## Get the information on the list of trips configured by the user
-    trips = get_changed_trips(mc, userkey)
+    trips = get_changed_trips(mc, settings.routes, userkey)
+    print(trips)
 
 
     if settings.notification_type == 'pb':
@@ -221,3 +216,9 @@ elif __name__ == '__main__':
             print('Invalid PushBullet key')
         #logger.info('sending delays to device with id %s', (settings.device_id))
         #p.pushNote(settings.device_id, 'NS Vertraging', "\n\n".join(delays_tosend))
+        if changed_disruptions:
+            # There are disruptions that are new or changed since last run
+            for disruption in changed_disruptions:
+                message = format_disruption(disruption)
+                print message
+                p.pushNote(settings.device_id, message['header'], message['message'])
