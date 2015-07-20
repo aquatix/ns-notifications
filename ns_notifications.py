@@ -138,7 +138,7 @@ def get_changed_trips(mc, userkey):
 
         print optimal_trip
 
-        mc.set(str(userkey) + '_trips', trips)
+        mc.set(str(userkey) + '_trips', ns_api.list_to_json(trips))
 
     except requests.exceptions.ConnectionError as e:
         print('[ERROR] connectionerror doing trips')
@@ -146,6 +146,21 @@ def get_changed_trips(mc, userkey):
         trips = []
 
     return trips
+
+
+def get_changed_departures(mc, station, userkey):
+
+    try:
+        departures = []
+        departures = nsapi.get_departures('Heemskerk')
+        print departures
+
+    except requests.exceptions.ConnectionError as e:
+        print('[ERROR] connectionerror doing departures')
+        errors.append(('Exception doing departures', e))
+
+
+
 
 
 if not hasattr(main, '__file__'):
@@ -198,39 +213,6 @@ elif __name__ == '__main__':
     trips = get_changed_trips(mc, userkey)
 
 
-    ## Wrapping up
-    print "errors:"
-    print errors
-
-    sys.exit(0)
-
-    try:
-        departures = []
-        departures = nsapi.get_departures('Heemskerk')
-        print departures
-
-    except requests.exceptions.ConnectionError as e:
-        print('[ERROR] connectionerror doing departures')
-        errors.append(('Exception doing departures', e))
-
-
-
-    #stations = []
-    #with open('stations.xml') as fd:
-    #    stations = nsapi.parse_stations(fd.read())
-
-    sys.exit(0)
-
-    print('-- departures --')
-    departures = []
-    with open('examples.xml') as fd:
-        departures = nsapi.parse_departures(fd.read())
-
-    print('-- trips --')
-    trips = []
-    with open('reismogelijkheden.xml') as fd:
-        trips = nsapi.parse_trips(fd.read())
-
     if settings.notification_type == 'pb':
         api_key = settings.pushbullet_key
         try:
@@ -238,4 +220,4 @@ elif __name__ == '__main__':
         except pushbullet.errors.InvalidKeyError:
             print('Invalid PushBullet key')
         #logger.info('sending delays to device with id %s', (settings.device_id))
-        p.pushNote(settings.device_id, 'NS Vertraging', "\n\n".join(delays_tosend))
+        #p.pushNote(settings.device_id, 'NS Vertraging', "\n\n".join(delays_tosend))
