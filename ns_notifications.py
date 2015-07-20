@@ -4,16 +4,15 @@ NS trip notifier
 from ns_api import ns_api
 from pushbullet import PushBullet
 import pushbullet
-#import pylibmc
 from pymemcache.client import Client as MemcacheClient
 import datetime
-#import simplejson as json
 import json
 import requests
 import __main__ as main
 import sys
 
 import settings
+
 
 # Only plan routes that are at maximum half an hour in the past or an hour in the future
 MAX_TIME_PAST = 1800
@@ -37,38 +36,10 @@ def json_deserializer(key, value, flags):
     raise Exception("Unknown serialization format")
 
 
-## Open memcache
-mc = MemcacheClient(('127.0.0.1', 11211), serializer=json_serializer,
-        deserializer=json_deserializer)
-
-
-#if hasattr(main, '__file__'):
-#    """
-#    Running in interactive mode in the Python shell
-#    """
-#    print("Running interactively in Python shell")
-
-#elif __name__ == '__main__':
-if __name__ == '__main__':
+def get_stations(mc):
     """
-    Notifier is ran standalone, rock and roll
+    Get the list of all stations, put in cache if not already there
     """
-
-    should_run = mc.get('nsapi_run')
-    if should_run == None:
-        should_run = True
-        #logger.info('no run tuple in memcache, creating')
-        mc.set('nsapi_run', should_run)
-
-    print('should run? ' + str(should_run))
-
-    if not should_run:
-        sys.exit(0)
-
-    errors = []
-    nsapi = ns_api.NSAPI(settings.username, settings.apikey)
-
-    ## Get the list of stations
     try:
         stations = mc.get('stations')
     except KeyError:
@@ -81,12 +52,14 @@ if __name__ == '__main__':
         stations_json = ns_api.list_to_json(stations)
         # Cache the stations
         mc.set('stations', stations_json)
+    return stations
 
 
-    ## Get the current disruptions (globally)
+def get_changed_disruptions(mc, disruptions):
+    """
+    Get the new or changed disruptions
+    """
     try:
-        disruptions = nsapi.get_disruptions()
-
         #prev_disruptions = None
         prev_disruptions = mc.get('prev_disruptions')
         # TODO: check whether this went ok
@@ -121,9 +94,12 @@ if __name__ == '__main__':
     except requests.exceptions.ConnectionError as e:
         print('[ERROR] connectionerror doing disruptions')
         errors.append(('Exception doing disruptions', e))
+        new_or_changed_unplanned = []
+
+    return new_or_changed_unplanned
 
 
-    ## Get the information on the list of trips configured by the user
+def get_changed_trips(mc, userkey):
     try:
         today = datetime.datetime.now().strftime('%d-%m')
         today_date = datetime.datetime.now().strftime('%d-%m-%Y')
@@ -162,9 +138,64 @@ if __name__ == '__main__':
 
         print optimal_trip
 
+        mc.set(str(userkey) + '_trips', trips)
+
     except requests.exceptions.ConnectionError as e:
         print('[ERROR] connectionerror doing trips')
         errors.append(('Exception doing trips', e))
+        trips = []
+
+    return trips
+
+
+if not hasattr(main, '__file__'):
+    """
+    Running in interactive mode in the Python shell
+    """
+    print("NS Notifier running interactively in Python shell")
+
+elif __name__ == '__main__':
+    """
+    NS Notifier is ran standalone, rock and roll
+    """
+
+    ## Open memcache
+    mc = MemcacheClient(('127.0.0.1', 11211), serializer=json_serializer,
+            deserializer=json_deserializer)
+
+    ## NS Notifier userkey (will come from url/cli parameter in the future)
+    try:
+        userkey = settings.userkey
+    except AttributeError:
+        userkey = 1
+
+
+    ## Are we planned to run? (E.g., not disabled through web)
+    should_run = mc.get('nsapi_run')
+    if should_run == None:
+        should_run = True
+        #logger.info('no run tuple in memcache, creating')
+        mc.set('nsapi_run', should_run)
+
+    print('should run? ' + str(should_run))
+
+    if not should_run:
+        sys.exit(0)
+
+    errors = []
+    nsapi = ns_api.NSAPI(settings.username, settings.apikey)
+
+    ## Get the list of stations
+    stations = get_stations(mc)
+
+
+    ## Get the current disruptions (globally)
+    disruptions = nsapi.get_disruptions()
+    changed_disruptions = get_changed_disruptions(mc, disruptions)
+
+
+    ## Get the information on the list of trips configured by the user
+    trips = get_changed_trips(mc, userkey)
 
 
     ## Wrapping up
