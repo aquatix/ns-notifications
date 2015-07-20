@@ -11,7 +11,11 @@ import requests
 import __main__ as main
 import sys
 
-import settings
+try:
+    import settings
+except ImportError:
+    print('Copy settings_example.py to settings.py and set the configuration to your own preferences')
+    sys.exit(1)
 
 
 # Only plan routes that are at maximum half an hour in the past or an hour in the future
@@ -41,9 +45,23 @@ def format_disruption(disruption):
 
 
 def format_trip(trip):
+    #print trip.__dict__
+    #trip = ns_api.Trip(trip)
     trip_delay = trip.delay
-    print trip_delay
-    return {'header': '', 'message': ''}
+    #print ('---')
+    #print trip_delay
+    message = ''
+    if trip_delay['requested_differs']:
+        message = message + 'Vertrekt andere tijd: ' + ns_api.simple_time(trip_delay['requested_differs']) + "\n"
+    if trip_delay['departure_delay']:
+        message = message + 'Vertraging: ' + ns_api.simple_time(trip_delay['departure_delay'])
+    subtrips = []
+    for part in trip.trip_parts:
+        if part.has_delay:
+            subtrips.append(part.transport_type + ' naar ' + part.destination + ' van ' + ns_api.simple_time(part.departure_time) + ' vertrekt ' + part.stops[0].platform)
+    # @TODO: finish
+    #print subtrips
+    return {'header': trip.trip_parts[0].transport_type + ' ' + trip.departure + '-' + trip.destination + ' (' + ns_api.simple_time(trip.requested_time) + ')', 'message': message}
 
 
 def get_stations(mc):
@@ -69,89 +87,89 @@ def get_changed_disruptions(mc, disruptions):
     """
     Get the new or changed disruptions
     """
-    try:
-        #prev_disruptions = None
-        prev_disruptions = mc.get('prev_disruptions')
-        # TODO: check whether this went ok
-        if prev_disruptions == None or prev_disruptions == []:
-            prev_disruptions = {'unplanned': [], 'planned': []}
+    #prev_disruptions = None
+    prev_disruptions = mc.get('prev_disruptions')
+    # TODO: check whether this went ok
+    if prev_disruptions == None or prev_disruptions == []:
+        prev_disruptions = {'unplanned': [], 'planned': []}
 
-        prev_disruptions['unplanned'] = ns_api.list_from_json(prev_disruptions['unplanned'])
-        #prev_disruptions['planned'] = ns_api.list_from_json(prev_disruptions['planned'])
+    prev_disruptions['unplanned'] = ns_api.list_from_json(prev_disruptions['unplanned'])
+    #prev_disruptions['planned'] = ns_api.list_from_json(prev_disruptions['planned'])
 
-        new_or_changed_unplanned = ns_api.list_diff(prev_disruptions['unplanned'], disruptions['unplanned'])
-        print('New or changed unplanned disruptions:')
-        print(new_or_changed_unplanned)
+    new_or_changed_unplanned = ns_api.list_diff(prev_disruptions['unplanned'], disruptions['unplanned'])
+    #print('New or changed unplanned disruptions:')
+    #print(new_or_changed_unplanned)
 
-        unchanged_unplanned = ns_api.list_same(prev_disruptions['unplanned'], disruptions['unplanned'])
+    #unchanged_unplanned = ns_api.list_same(prev_disruptions['unplanned'], disruptions['unplanned'])
 
-        prev_unplanned = new_or_changed_unplanned + unchanged_unplanned
+    #prev_unplanned = new_or_changed_unplanned + unchanged_unplanned
 
-        # Planned disruptions don't have machine-readable date/time and route information, so
-        # we skip planned disruptions for this moment
-        #new_or_changed_planned = ns_api.list_diff(prev_disruptions['planned'], disruptions['planned'])
-        #print(new_or_changed_planned)
-        #for plan in new_or_changed_planned:
-        #    print plan.key
-        #    print plan.message
-        #    print "------"
+    # Planned disruptions don't have machine-readable date/time and route information, so
+    # we skip planned disruptions for this moment
+    #new_or_changed_planned = ns_api.list_diff(prev_disruptions['planned'], disruptions['planned'])
+    #print(new_or_changed_planned)
+    #for plan in new_or_changed_planned:
+    #    print plan.key
+    #    print plan.message
+    #    print "------"
 
-        #unchanged_planned = ns_api.list_same(prev_disruptions['planned'], disruptions['planned'])
-        #prev_planned = new_or_changed_planned + unchanged_planned
+    #unchanged_planned = ns_api.list_same(prev_disruptions['planned'], disruptions['planned'])
+    #prev_planned = new_or_changed_planned + unchanged_planned
 
-        # Update the cached list with the current information
-        mc.set('prev_disruptions', {'unplanned': ns_api.list_to_json(prev_unplanned), 'planned': []})
-
-    except requests.exceptions.ConnectionError as e:
-        print('[ERROR] connectionerror doing disruptions')
-        errors.append(('Exception doing disruptions', e))
-        new_or_changed_unplanned = []
-
+    # Update the cached list with the current information
+    #mc.set('prev_disruptions', {'unplanned': ns_api.list_to_json(prev_unplanned), 'planned': []})
+    mc.set('prev_disruptions', {'unplanned': ns_api.list_to_json(disruptions['unplanned']), 'planned': []})
     return new_or_changed_unplanned
 
 
 def get_changed_trips(mc, routes, userkey):
-    try:
-        today = datetime.datetime.now().strftime('%d-%m')
-        today_date = datetime.datetime.now().strftime('%d-%m-%Y')
-        current_time = datetime.datetime.now()
+    """
+    Get the new or changed trips for userkey
+    """
+    today = datetime.datetime.now().strftime('%d-%m')
+    today_date = datetime.datetime.now().strftime('%d-%m-%Y')
+    current_time = datetime.datetime.now()
 
-        prev_trips = mc.get(str(userkey) + '_trips')
-        if prev_trips == None:
-            prev_trips = []
-        prev_trips = ns_api.list_from_json(prev_trips)
-        #print prev_trips
-        trips = []
+    prev_trips = mc.get(str(userkey) + '_trips')
+    if prev_trips == None:
+        prev_trips = []
+    prev_trips = ns_api.list_from_json(prev_trips)
+    #print prev_trips
+    trips = []
 
-        for route in routes:
+    for route in routes:
+        if len(route['time']) == 5:
             route_time = datetime.datetime.strptime(today_date + " " + route['time'], "%d-%m-%Y %H:%M")
-            delta = current_time - route_time
-            #if current_time > route_time and delta.total_seconds() > MAX_TIME_PAST:
-            #    # the route was too long ago ago, lets skip it
-            #    #logger.info('route %s was too long ago, skipped', route)
-            #    continue
-            if current_time < route_time and abs(delta.total_seconds()) > MAX_TIME_FUTURE:
-                # the route is too much in the future, lets skip it
-                #logger.info('route %s was too much in the future, skipped', route)
-                continue
-                print route['time'] + ' ' + route['departure']
-            current_trips = nsapi.get_trips(route['time'], route['departure'], route['keyword'], route['destination'], True)
-            optimal_trip = ns_api.Trip.get_optimal(current_trips, route['time'])
-            if not optimal_trip:
-                print "Optimal not found. Alert?"
-                # TODO: Get the trip before and the one after route['time']?
-            trips.append(optimal_trip)
-            print(optimal_trip)
+        else:
+            route_time = datetime.datetime.strptime(route['time'], "%d-%m-%Y %H:%M")
+        delta = current_time - route_time
+        if current_time > route_time and delta.total_seconds() > MAX_TIME_PAST:
+            # the route was too long ago ago, lets skip it
+            #logger.info('route %s was too long ago, skipped', route)
+            continue
+        if current_time < route_time and abs(delta.total_seconds()) > MAX_TIME_FUTURE:
+            # the route is too much in the future, lets skip it
+            #logger.info('route %s was too much in the future, skipped', route)
+            continue
+            #print route['time'] + ' ' + route['departure']
+        try:
+            keyword = route['keyword']
+        except KeyError:
+            keyword = None
+        current_trips = nsapi.get_trips(route['time'], route['departure'], keyword, route['destination'], True)
+        optimal_trip = ns_api.Trip.get_optimal(current_trips, route['time'])
+        if not optimal_trip:
+            print "Optimal not found. Alert?"
+            # TODO: Get the trip before and the one after route['time']?
+        trips.append(optimal_trip)
+        #print(optimal_trip)
 
-        new_or_changed_trips = ns_api.list_diff(prev_trips, trips)
+    #new_or_changed_trips = ns_api.list_diff(prev_trips, trips)
+    # @TODO: make Trips really diffable
+    new_or_changed_trips = trips
+    #print trips[1].__dict__
 
-        mc.set(str(userkey) + '_trips', ns_api.list_to_json(trips))
-
-    except requests.exceptions.ConnectionError as e:
-        print('[ERROR] connectionerror doing trips')
-        errors.append(('Exception doing trips', e))
-        trips = []
-
+    mc.set(str(userkey) + '_trips', ns_api.list_to_json(trips))
     return new_or_changed_trips
 
 
@@ -199,7 +217,7 @@ elif __name__ == '__main__':
         #logger.info('no run tuple in memcache, creating')
         mc.set('nsapi_run', should_run)
 
-    print('should run? ' + str(should_run))
+    #print('should run? ' + str(should_run))
 
     if not should_run:
         sys.exit(0)
@@ -212,13 +230,24 @@ elif __name__ == '__main__':
 
 
     ## Get the current disruptions (globally)
-    disruptions = nsapi.get_disruptions()
-    changed_disruptions = get_changed_disruptions(mc, disruptions)
+    try:
+        disruptions = nsapi.get_disruptions()
+        changed_disruptions = get_changed_disruptions(mc, disruptions)
+    except requests.exceptions.ConnectionError as e:
+        print('[ERROR] connectionerror doing disruptions')
+        errors.append(('Exception doing disruptions', e))
+        new_or_changed_unplanned = []
 
 
     ## Get the information on the list of trips configured by the user
-    trips = get_changed_trips(mc, settings.routes, userkey)
-    print(trips)
+    try:
+        trips = get_changed_trips(mc, settings.routes, userkey)
+        #print(trips)
+    except requests.exceptions.ConnectionError as e:
+        print('[ERROR] connectionerror doing trips')
+        errors.append(('Exception doing trips', e))
+        trips = []
+
 
 
     if settings.notification_type == 'pb':
@@ -227,16 +256,26 @@ elif __name__ == '__main__':
             p = PushBullet(api_key)
         except pushbullet.errors.InvalidKeyError:
             print('Invalid PushBullet key')
+        devs = p.devices
+        sendto_device = None
+        if settings.device_id != None:
+            for dev in devs:
+                #print dev.device_iden + ' ' + dev.nickname
+                if dev.device_iden == settings.device_id:
+                    sendto_device = dev
+        #print sendto_device
         #logger.info('sending delays to device with id %s', (settings.device_id))
         #p.pushNote(settings.device_id, 'NS Vertraging', "\n\n".join(delays_tosend))
         if changed_disruptions:
             # There are disruptions that are new or changed since last run
             for disruption in changed_disruptions:
                 message = format_disruption(disruption)
-                print message
-                p.push_note(message['header'], message['message'], settings.device_id)
+                #print message
+                p.push_note(message['header'], message['message'], sendto_device)
         if trips:
             for trip in trips:
-                message = format_trip(trip)
-                print message
-                p.push_note(message['header'], message['message'], settings.device_id)
+                if trip.has_delay:
+                    message = format_trip(trip)
+                    #print message
+                    #p.push_note('title', 'body', sendto_device)
+                    p.push_note(message['header'], message['message'], sendto_device)
