@@ -60,7 +60,7 @@ if __name__ == '__main__':
         #logger.info('no run tuple in memcache, creating')
         mc.set('nsapi_run', should_run)
 
-    print(should_run)
+    print('should run? ' + str(should_run))
 
     if not should_run:
         sys.exit(0)
@@ -87,15 +87,17 @@ if __name__ == '__main__':
     try:
         disruptions = nsapi.get_disruptions()
 
+        #prev_disruptions = None
         prev_disruptions = mc.get('prev_disruptions')
         # TODO: check whether this went ok
         if prev_disruptions == None or prev_disruptions == []:
             prev_disruptions = {'unplanned': [], 'planned': []}
 
         prev_disruptions['unplanned'] = ns_api.list_from_json(prev_disruptions['unplanned'])
-        prev_disruptions['planned'] = ns_api.list_from_json(prev_disruptions['planned'])
+        #prev_disruptions['planned'] = ns_api.list_from_json(prev_disruptions['planned'])
 
         new_or_changed_unplanned = ns_api.list_diff(prev_disruptions['unplanned'], disruptions['unplanned'])
+        print('New or changed unplanned disruptions:')
         print(new_or_changed_unplanned)
 
         unchanged_unplanned = ns_api.list_same(prev_disruptions['unplanned'], disruptions['unplanned'])
@@ -151,6 +153,8 @@ if __name__ == '__main__':
             print "TOO EARLY"
         trips = nsapi.get_trips(route['time'], route['departure'], route['keyword'], route['destination'], True)
         optimal_trip = ns_api.Trip.get_optimal(trips, route['time'])
+
+        print ns_api.list_to_json(trips)
 
         if not optimal_trip:
             print "Optimal not found. Alert?"
