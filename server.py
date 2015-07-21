@@ -1,9 +1,10 @@
 import logging
-import pylibmc
+from pymemcache.client import Client as MemcacheClient
 from flask import Flask
 from flask import jsonify
 from flask import request
 app = Flask(__name__)
+from ns_notifications import *
 
 # create logger
 logger = logging.getLogger('nsapi_server')
@@ -23,11 +24,12 @@ logger.addHandler(fh)
 logger.addHandler(ch)
 
 # Connect to the Memcache daemon
-mc = pylibmc.Client(['127.0.0.1'], binary=True, behaviors={'tcp_nodelay': True, 'ketama': True})
+mc = MemcacheClient(('127.0.0.1', 11211), serializer=json_serializer,
+        deserializer=json_deserializer)
 
 @app.route('/')
 def nsapi_status():
-    logger.info('[%s][status] nsapi_run: %s', request.remote_addr, mc['nsapi_run'])
+    logger.info('[%s][status] nsapi_run: %s', request.remote_addr, mc.get('nsapi_run'))
     result = []
     result.append('<h2>NS api status</h2>')
     if 'nsapi_run' in mc:
@@ -45,21 +47,23 @@ def nsapi_status():
 @app.route('/disable/<location>')
 def disable_notifier(location=None):
     location_prefix = '[{0}][location: {1}]'.format(request.remote_addr, location)
-    if 'nsapi_run' in mc:
-        logger.info('%s nsapi_run was %s, disabling' % (location_prefix, mc['nsapi_run']))
-    else:
+    try:
+        should_run = mc.get('nsapi_run')
+        logger.info('%s nsapi_run was %s, disabling' % (location_prefix, should_run))
+    except KeyError:
         logger.info('%s no nsapi_run tuple in memcache, creating with value False' % location_prefix)
-    mc['nsapi_run'] = False
+    mc.set('nsapi_run', False)
     return 'Disabling notifications'
 
 @app.route('/enable/<location>')
 def enable_notifier(location=None):
     location_prefix = '[{0}][location: {1}]'.format(request.remote_addr, location)
-    if 'nsapi_run' in mc:
-        logger.info('%s nsapi_run was %s, enabling' % (location_prefix, mc['nsapi_run']))
-    else:
+    try:
+        should_run = mc.get('nsapi_run')
+        logger.info('%s nsapi_run was %s, enabling' % (location_prefix, should_run))
+    except KeyError:
         logger.info('%s no nsapi_run tuple in memcache, creating with value True' % location_prefix)
-    mc['nsapi_run'] = True
+    mc.set('nsapi_run', True)
     return 'Enabling notifications'
 
 if __name__ == '__main__':
