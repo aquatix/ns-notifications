@@ -32,8 +32,11 @@ def nsapi_status():
     logger.info('[%s][status] nsapi_run: %s', request.remote_addr, mc.get('nsapi_run'))
     result = []
     result.append('<h2>NS api status</h2>')
-    if 'nsapi_run' in mc:
+    try:
+        should_run = mc.get('nsapi_run')
         result.append("nsapi_run: %s" % mc['nsapi_run'])
+    except KeyError:
+        result.append("nsapi_run not found")
     result.append('<h2>Disruptions</h2>')
     result.append('<pre>')
     result.append("\n".join(mc['nsapi_disruptions']))

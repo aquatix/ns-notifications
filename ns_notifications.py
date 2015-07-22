@@ -9,6 +9,7 @@ import datetime
 import json
 import requests
 import __main__ as main
+import logging
 import sys
 
 try:
@@ -54,7 +55,11 @@ def format_trip(trip):
     if trip_delay['requested_differs']:
         message = message + 'Vertrekt andere tijd: ' + ns_api.simple_time(trip_delay['requested_differs']) + "\n"
     if trip_delay['departure_delay']:
-        message = message + 'Vertraging: ' + ns_api.simple_time(trip_delay['departure_delay'])
+        #message = message + 'Vertraging'
+        #message = message + 'Vertraging: ' + str(trip_delay['departure_delay'])
+        message = message + 'Vertraging: ' + ns_api.simple_time(trip_delay['departure_delay']) + "\n"
+    if trip.arrival_time_actual != trip.arrival_time_planned:
+        message = message + 'Andere aankomsttijd: ' + ns_api.simple_time(trip.arrival_time_actual) + ' ipv ' + ns_api.simple_time(trip.arrival_time_planned) + ' (' + ns_api.simple_time(trip.arrival_time_actual - trip.arrival_time_planned) + ")\n"
     subtrips = []
     for part in trip.trip_parts:
         if part.has_delay:
@@ -93,10 +98,13 @@ def get_changed_disruptions(mc, disruptions):
     if prev_disruptions == None or prev_disruptions == []:
         prev_disruptions = {'unplanned': [], 'planned': []}
 
-    prev_disruptions['unplanned'] = ns_api.list_from_json(prev_disruptions['unplanned'])
+    #print prev_disruptions['unplanned']
+    #prev_disruptions['unplanned'] = ns_api.list_from_json(prev_disruptions['unplanned'])
+    prev_disruptions_unplanned = ns_api.list_from_json(prev_disruptions['unplanned'])
     #prev_disruptions['planned'] = ns_api.list_from_json(prev_disruptions['planned'])
 
-    new_or_changed_unplanned = ns_api.list_diff(prev_disruptions['unplanned'], disruptions['unplanned'])
+    #new_or_changed_unplanned = ns_api.list_diff(prev_disruptions['unplanned'], disruptions['unplanned'])
+    new_or_changed_unplanned = ns_api.list_diff(prev_disruptions_unplanned, disruptions['unplanned'])
     #print('New or changed unplanned disruptions:')
     #print(new_or_changed_unplanned)
 
@@ -145,13 +153,10 @@ def get_changed_trips(mc, routes, userkey):
         delta = current_time - route_time
         if current_time > route_time and delta.total_seconds() > MAX_TIME_PAST:
             # the route was too long ago ago, lets skip it
-            #logger.info('route %s was too long ago, skipped', route)
             continue
         if current_time < route_time and abs(delta.total_seconds()) > MAX_TIME_FUTURE:
             # the route is too much in the future, lets skip it
-            #logger.info('route %s was too much in the future, skipped', route)
             continue
-            #print route['time'] + ' ' + route['departure']
         try:
             keyword = route['keyword']
         except KeyError:
@@ -164,9 +169,9 @@ def get_changed_trips(mc, routes, userkey):
         trips.append(optimal_trip)
         #print(optimal_trip)
 
-    #new_or_changed_trips = ns_api.list_diff(prev_trips, trips)
+    new_or_changed_trips = ns_api.list_diff(prev_trips, trips)
     # @TODO: make Trips really diffable
-    new_or_changed_trips = trips
+    #new_or_changed_trips = trips
     #print trips[1].__dict__
 
     mc.set(str(userkey) + '_trips', ns_api.list_to_json(trips))
@@ -199,6 +204,18 @@ elif __name__ == '__main__':
     NS Notifier is ran standalone, rock and roll
     """
 
+    ## Create logger
+    logger = logging.getLogger('ns_notifications')
+    logger.setLevel(logging.DEBUG)
+    # create file handler which logs even debug messages
+    fh = logging.FileHandler('ns_notifications.log')
+    fh.setLevel(logging.DEBUG)
+    # create formatter and add it to the handlers
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    fh.setFormatter(formatter)
+    # add the handlers to the logger
+    logger.addHandler(fh)
+
     ## Open memcache
     mc = MemcacheClient(('127.0.0.1', 11211), serializer=json_serializer,
             deserializer=json_deserializer)
@@ -211,13 +228,17 @@ elif __name__ == '__main__':
 
 
     ## Are we planned to run? (E.g., not disabled through web)
-    should_run = mc.get('nsapi_run')
+    try:
+        should_run = mc.get('nsapi_run')
+    except:
+        should_run = True
     if should_run == None:
         should_run = True
         #logger.info('no run tuple in memcache, creating')
         mc.set('nsapi_run', should_run)
 
     #print('should run? ' + str(should_run))
+    logger.debug('Should run: ' + str(should_run))
 
     if not should_run:
         sys.exit(0)
@@ -235,6 +256,7 @@ elif __name__ == '__main__':
         changed_disruptions = get_changed_disruptions(mc, disruptions)
     except requests.exceptions.ConnectionError as e:
         print('[ERROR] connectionerror doing disruptions')
+        logger.error('Exception doing disruptions ' + str(e))
         errors.append(('Exception doing disruptions', e))
         new_or_changed_unplanned = []
 
@@ -245,6 +267,7 @@ elif __name__ == '__main__':
         #print(trips)
     except requests.exceptions.ConnectionError as e:
         print('[ERROR] connectionerror doing trips')
+        logger.error('Exception doing trips ' + str(e))
         errors.append(('Exception doing trips', e))
         trips = []
 
@@ -270,6 +293,7 @@ elif __name__ == '__main__':
             # There are disruptions that are new or changed since last run
             for disruption in changed_disruptions:
                 message = format_disruption(disruption)
+                logger.debug(message)
                 #print message
                 p.push_note(message['header'], message['message'], sendto_device)
         if trips:
@@ -277,5 +301,6 @@ elif __name__ == '__main__':
                 if trip.has_delay:
                     message = format_trip(trip)
                     #print message
+                    logger.debug(message)
                     #p.push_note('title', 'body', sendto_device)
                     p.push_note(message['header'], message['message'], sendto_device)
