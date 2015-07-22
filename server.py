@@ -3,8 +3,10 @@ from pymemcache.client import Client as MemcacheClient
 from flask import Flask
 from flask import jsonify
 from flask import request
-app = Flask(__name__)
+from werkzeug.debug import get_current_traceback
 from ns_notifications import *
+
+app = Flask(__name__)
 
 # create logger
 logger = logging.getLogger('nsapi_server')
@@ -38,13 +40,37 @@ def nsapi_status():
     except KeyError:
         result.append("nsapi_run not found")
     result.append('<h2>Disruptions</h2>')
-    result.append('<pre>')
-    result.append("\n".join(mc['nsapi_disruptions']))
-    result.append('</pre>')
+    try:
+        prev_disruptions = mc.get('prev_disruptions')
+        disruptions = ns_api.list_from_json(prev_disruptions['unplanned'])
+        for disruption in disruptions:
+            message = format_disruption(disruption)
+            logger.debug(message)
+            result.append('<h3>' + message['header'] + '</h3>')
+            if message['message']:
+                result.append('<pre>' + message['message'] + '</pre>')
+            else:
+                result.append('<pre>Nothing to see here</pre>')
+    except KeyError:
+        result.append('No disruptions found')
+        track = get_current_traceback(skip=1, show_hidden_frames=True,
+                                      ignore_system_exceptions=False)
+        track.log()
+        abort(500)
     result.append('<h2>Delays</h2>')
-    result.append('<pre>')
-    result.append("\n".join(mc['nsapi_delays']))
-    result.append('</pre>')
+    try:
+        prev_delays = mc.get('1_trips')
+        delays = ns_api.list_from_json(prev_delays)
+        for delay in delays:
+            message = format_trip(delay)
+            result.append('<h3>' + message['header'] + '</h3>')
+            result.append('<pre>' + message['message'] + '</pre>')
+    except KeyError:
+        result.append('No trips found')
+        track = get_current_traceback(skip=1, show_hidden_frames=True,
+                                      ignore_system_exceptions=False)
+        track.log()
+        abort(500)
     return "\n".join(result)
 
 @app.route('/disable/<location>')
