@@ -67,8 +67,10 @@ def format_trip(trip):
     for part in trip.trip_parts:
         if part.has_delay:
             subtrips.append(part.transport_type + ' naar ' + part.destination + ' van ' + ns_api.simple_time(part.departure_time) + ' vertrekt ' + part.stops[0].platform)
-    # @TODO: finish
-    #print subtrips
+            for stop in part.stops:
+                if stop.delay:
+                    subtrips.append('Stop ' + stop.name + ' @ ' + stop.time + ' ' + stop.delay)
+    message = message + "\n".join(subtrips)
     return {'header': trip.trip_parts[0].transport_type + ' ' + trip.departure + '-' + trip.destination + ' (' + ns_api.simple_time(trip.requested_time) + ')', 'message': message}
 
 
