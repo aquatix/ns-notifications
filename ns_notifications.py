@@ -23,6 +23,9 @@ except ImportError:
 MAX_TIME_PAST = 1800
 MAX_TIME_FUTURE = 3600
 
+# Set max time to live for a key to an hour
+MEMCACHE_TTL = 3600
+
 
 ## Helper functions for memcache serialisation
 def json_serializer(key, value):
@@ -111,6 +114,8 @@ def get_changed_disruptions(mc, disruptions):
     #unchanged_unplanned = ns_api.list_same(prev_disruptions['unplanned'], disruptions['unplanned'])
 
     #prev_unplanned = new_or_changed_unplanned + unchanged_unplanned
+    #prev_unplanned = new_or_changed_unplanned + prev_disruptions_unplanned
+    save_unplanned = ns_api.list_merge(prev_disruptions_unplanned, new_or_changed_unplanned)
 
     # Planned disruptions don't have machine-readable date/time and route information, so
     # we skip planned disruptions for this moment
@@ -126,7 +131,8 @@ def get_changed_disruptions(mc, disruptions):
 
     # Update the cached list with the current information
     #mc.set('prev_disruptions', {'unplanned': ns_api.list_to_json(prev_unplanned), 'planned': []})
-    mc.set('prev_disruptions', {'unplanned': ns_api.list_to_json(disruptions['unplanned']), 'planned': []})
+    #mc.set('prev_disruptions', {'unplanned': ns_api.list_to_json(disruptions['unplanned']), 'planned': []}, MEMCACHE_TTL)
+    mc.set('prev_disruptions', {'unplanned': ns_api.list_to_json(save_unplanned), 'planned': []}, MEMCACHE_TTL)
     return new_or_changed_unplanned
 
 
@@ -170,11 +176,10 @@ def get_changed_trips(mc, routes, userkey):
         #print(optimal_trip)
 
     new_or_changed_trips = ns_api.list_diff(prev_trips, trips)
-    # @TODO: make Trips really diffable
-    #new_or_changed_trips = trips
-    #print trips[1].__dict__
+    #prev_trips = new_or_changed_trips + trips
+    save_trips = ns_api.list_merge(prev_trips, trips)
 
-    mc.set(str(userkey) + '_trips', ns_api.list_to_json(trips))
+    mc.set(str(userkey) + '_trips', ns_api.list_to_json(save_trips), MEMCACHE_TTL)
     return new_or_changed_trips
 
 
@@ -251,6 +256,7 @@ elif __name__ == '__main__':
 
 
     ## Get the current disruptions (globally)
+    changed_disruptions = []
     try:
         disruptions = nsapi.get_disruptions()
         changed_disruptions = get_changed_disruptions(mc, disruptions)
