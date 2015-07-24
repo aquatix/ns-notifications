@@ -286,16 +286,23 @@ elif __name__ == '__main__':
             p = PushBullet(api_key)
         except pushbullet.errors.InvalidKeyError:
             print('Invalid PushBullet key')
+            sys.exit(1)
         devs = p.devices
         sendto_device = None
-        if settings.device_id != None:
+        try:
+            if settings.pushbullet_device_id != None:
+                for dev in devs:
+                    #print dev.device_iden + ' ' + dev.nickname
+                    if dev.device_iden == settings.pushbullet_device_id:
+                        sendto_device = dev
+        except AttributeError:
+            # pushbullet_device_id wasn't even found in settings.py
+            pass
+        if not sendto_device:
+            print "Please select a device from the PushBullet list and set as pushbullet_device_id in settings.py"
             for dev in devs:
-                #print dev.device_iden + ' ' + dev.nickname
-                if dev.device_iden == settings.device_id:
-                    sendto_device = dev
-        #print sendto_device
-        #logger.info('sending delays to device with id %s', (settings.device_id))
-        #p.pushNote(settings.device_id, 'NS Vertraging', "\n\n".join(delays_tosend))
+                print("{: >20} {: >40}".format(dev.device_iden, dev.nickname))
+            sys.exit(1)
         if changed_disruptions:
             # There are disruptions that are new or changed since last run
             for disruption in changed_disruptions:

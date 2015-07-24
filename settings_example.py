@@ -3,11 +3,19 @@ username = 'your@email.address'
 apikey = 'someVeryLongKeyThatNSWillProvideYou'
 # https://www.ns.nl/ews-aanvraagformulier/
 
+# Notifications types:
+# pb: PushBullet
+# pt: Pebble Time timeline (not yet implemented)
 notification_type = 'pb' # Use PushBullet
+
 # Pushbullet API key. See their website
 pushbullet_key = "YOURKEYHERE"
-# Device to push to. See p.getDevices() for the List of which to choose
-device_id = "DEVICEKEYHERE"
+# Device to push to. Run ns_notifications with an invalid device_id for the list of which to choose
+pushbullet_device_id = "DEVICEKEYHERE"
+
+# Set to True when you want the disruptions (storingen) to go to a channel
+pushbullet_use_channel = False
+pushbullet_channel_tag = 'yourPushBulletChannelTag'
 
 # Uncomment the next two lines if you only want ERROR-level logging (or change to logging.WARNING for example)
 #import logging
