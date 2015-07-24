@@ -261,7 +261,7 @@ elif __name__ == '__main__':
     changed_disruptions = []
     get_disruptions = True
     try:
-        if settings.pushbullet_skip_disruptions:
+        if settings.skip_disruptions:
             get_disruptions = False
     except AttributeError:
         logger.error('Missing pushbullet_channel_tag setting')
