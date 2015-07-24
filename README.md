@@ -28,6 +28,12 @@ Then copy `settings_example.py` to `settings.py` and modify the configuration to
 
 N.B.: if you encounter issues after updating from the repo, try checking [settings_example.py](settings_example.py) against your settings.py. Some new configuration items might be added.
 
+### NS API key
+
+To actually be able to query the [Nederlandse Spoorwegen API](http://www.ns.nl/api/api), you [need to request a key](https://www.ns.nl/ews-aanvraagformulier/). Provide a good reason and you will likely get it mailed to you (it might take some days).
+
+After receiving the key, put it together with the email address you used in settings.py
+
 
 ## Running
 
