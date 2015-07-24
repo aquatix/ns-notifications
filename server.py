@@ -63,6 +63,8 @@ def nsapi_status():
         delays = ns_api.list_from_json(prev_delays)
         for delay in delays:
             message = format_trip(delay)
+            if not message['message']:
+                message['message'] = 'Geen bijzonderheden'
             result.append('<h3>' + message['header'] + '</h3>')
             result.append('<pre>' + message['message'] + '</pre>')
     except KeyError:
