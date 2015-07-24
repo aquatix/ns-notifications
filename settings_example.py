@@ -17,6 +17,10 @@ pushbullet_device_id = "DEVICEKEYHERE"
 pushbullet_use_channel = False
 pushbullet_channel_tag = 'yourPushBulletChannelTag'
 
+# You might want to set this to True if you're already subscribed to someone else's (official) Channel
+# See for example https://www.pushbullet.com/channel?tag=treinverstoringen
+pushbullet_skip_disruptions = False
+
 # Uncomment the next two lines if you only want ERROR-level logging (or change to logging.WARNING for example)
 #import logging
 #debug_level = logging.ERROR

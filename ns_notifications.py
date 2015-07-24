@@ -259,13 +259,20 @@ elif __name__ == '__main__':
 
     ## Get the current disruptions (globally)
     changed_disruptions = []
+    get_disruptions = True
     try:
-        disruptions = nsapi.get_disruptions()
-        changed_disruptions = get_changed_disruptions(mc, disruptions)
-    except requests.exceptions.ConnectionError as e:
-        print('[ERROR] connectionerror doing disruptions')
-        logger.error('Exception doing disruptions ' + str(e))
-        errors.append(('Exception doing disruptions', e))
+        if settings.pushbullet_skip_disruptions:
+            get_disruptions = False
+    except AttributeError:
+        logger.error('Missing pushbullet_channel_tag setting')
+    if get_disruptions:
+        try:
+            disruptions = nsapi.get_disruptions()
+            changed_disruptions = get_changed_disruptions(mc, disruptions)
+        except requests.exceptions.ConnectionError as e:
+            print('[ERROR] connectionerror doing disruptions')
+            logger.error('Exception doing disruptions ' + str(e))
+            errors.append(('Exception doing disruptions', e))
 
 
     ## Get the information on the list of trips configured by the user
