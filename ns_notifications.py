@@ -66,10 +66,10 @@ def format_trip(trip):
     subtrips = []
     for part in trip.trip_parts:
         if part.has_delay:
-            subtrips.append(part.transport_type + ' naar ' + part.destination + ' van ' + ns_api.simple_time(part.departure_time) + ' vertrekt ' + part.stops[0].platform)
+            subtrips.append(part.transport_type + ' naar ' + part.destination + ' van ' + ns_api.simple_time(part.departure_time) + ' vertrekt van spoor ' + part.stops[0].platform)
             for stop in part.stops:
                 if stop.delay:
-                    subtrips.append('Stop ' + stop.name + ' @ ' + stop.time + ' ' + stop.delay)
+                    subtrips.append('Stop ' + stop.name + ' @ ' + ns_api.simple_time(stop.time) + ' ' + stop.delay)
     message = message + "\n".join(subtrips)
     return {'header': trip.trip_parts[0].transport_type + ' ' + trip.departure + '-' + trip.destination + ' (' + ns_api.simple_time(trip.requested_time) + ')', 'message': message}
 
@@ -266,7 +266,6 @@ elif __name__ == '__main__':
         print('[ERROR] connectionerror doing disruptions')
         logger.error('Exception doing disruptions ' + str(e))
         errors.append(('Exception doing disruptions', e))
-        new_or_changed_unplanned = []
 
 
     ## Get the information on the list of trips configured by the user
