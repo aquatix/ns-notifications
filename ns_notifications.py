@@ -305,11 +305,29 @@ elif __name__ == '__main__':
             sys.exit(1)
         if changed_disruptions:
             # There are disruptions that are new or changed since last run
+            sendto_channel = None
+            try:
+                if settings.pushbullet_use_channel:
+                    channels = p.channels
+                    for channel in channels:
+                        #print dev.device_iden + ' ' + dev.nickname
+                        if channel.channel_tag == settings.pushbullet_channel_tag:
+                            sendto_channel = channel
+                    if not sendto_channel:
+                        logger.error('PushBullet channel configured, but tag "' + settings.pushbullet_channel_tag + '" not found')
+                        print('PushBullet channel configured, but tag "' + settings.pushbullet_channel_tag + '" not found')
+            except AttributeError, e:
+                logger.error('PushBullet channel settings not found - ' + str(e))
+                print('PushBullet channel settings not found, see settings_example.py - ' + str(e))
+
             for disruption in changed_disruptions:
                 message = format_disruption(disruption)
                 logger.debug(message)
                 #print message
-                p.push_note(message['header'], message['message'], sendto_device)
+                if sendto_channel:
+                    sendto_channel.push_note(message['header'], message['message'])
+                else:
+                    p.push_note(message['header'], message['message'], sendto_device)
         if trips:
             for trip in trips:
                 if trip.has_delay:
