@@ -269,9 +269,9 @@ elif __name__ == '__main__':
         try:
             disruptions = nsapi.get_disruptions()
             changed_disruptions = get_changed_disruptions(mc, disruptions)
-        except requests.exceptions.ConnectionError as e:
+        except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError) as e:
             print('[ERROR] connectionerror doing disruptions')
-            logger.error('Exception doing disruptions ' + str(e))
+            logger.error('Exception doing disruptions ' + repr(e))
             errors.append(('Exception doing disruptions', e))
 
 
@@ -279,9 +279,9 @@ elif __name__ == '__main__':
     try:
         trips = get_changed_trips(mc, settings.routes, userkey)
         #print(trips)
-    except requests.exceptions.ConnectionError as e:
+    except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError) as e:
         print('[ERROR] connectionerror doing trips')
-        logger.error('Exception doing trips ' + str(e))
+        logger.error('Exception doing trips ' + repr(e))
         errors.append(('Exception doing trips', e))
         trips = []
 

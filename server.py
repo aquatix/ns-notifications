@@ -51,12 +51,12 @@ def nsapi_status():
                 result.append('<pre>' + message['message'] + '</pre>')
             else:
                 result.append('<pre>Nothing to see here</pre>')
-    except KeyError:
+    except TypeError:
         result.append('No disruptions found')
         track = get_current_traceback(skip=1, show_hidden_frames=True,
                                       ignore_system_exceptions=False)
         track.log()
-        abort(500)
+        #abort(500)
     result.append('<h2>Delays</h2>')
     try:
         prev_delays = mc.get('1_trips')
@@ -67,12 +67,12 @@ def nsapi_status():
                 message['message'] = 'Geen bijzonderheden'
             result.append('<h3>' + message['header'] + '</h3>')
             result.append('<pre>' + message['message'] + '</pre>')
-    except KeyError:
+    except TypeError:
         result.append('No trips found')
         track = get_current_traceback(skip=1, show_hidden_frames=True,
                                       ignore_system_exceptions=False)
         track.log()
-        abort(500)
+        #abort(500)
     return "\n".join(result)
 
 @app.route('/disable/<location>')
@@ -99,5 +99,5 @@ def enable_notifier(location=None):
 
 if __name__ == '__main__':
     # Run on public interface (!) on non-80 port
-    #app.debug = True
+    app.debug = True
     app.run(host='0.0.0.0', port=8086)
