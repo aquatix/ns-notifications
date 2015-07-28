@@ -33,6 +33,7 @@ mc = MemcacheClient(('127.0.0.1', 11211), serializer=json_serializer,
 def nsapi_status():
     logger.info('[%s][status] nsapi_run: %s', request.remote_addr, mc.get('nsapi_run'))
     result = []
+    result.append('<html><head><title>NS Storingen</title></head><body>')
     result.append('<h2>NS api status</h2>')
     try:
         should_run = mc.get('nsapi_run')
@@ -73,6 +74,7 @@ def nsapi_status():
                                       ignore_system_exceptions=False)
         track.log()
         #abort(500)
+    result.append('</body></html>')
     return "\n".join(result)
 
 @app.route('/disable/<location>')
