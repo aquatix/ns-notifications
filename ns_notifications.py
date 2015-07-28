@@ -1,3 +1,4 @@
+ # -*- coding: utf-8 -*-
 """
 NS trip notifier
 """
@@ -45,32 +46,35 @@ def json_deserializer(key, value, flags):
 
 
 def format_disruption(disruption):
-    return {'header': 'Traject: ' + disruption.line, 'message': disruption.reason + "\n" + disruption.message}
+    return {'header': 'Traject: ' + disruption.line, 'message': u'⚠ ' + disruption.reason + "\n" + disruption.message}
+    #return {'header': 'Traject: ' + disruption.line, 'message': disruption.reason + "\n" + disruption.message}
 
 
-def format_trip(trip):
-    #print trip.__dict__
-    #trip = ns_api.Trip(trip)
+def format_trip(trip, text_type='long'):
+    """
+    text_type: (long|symbol)
+    """
     trip_delay = trip.delay
-    #print ('---')
-    #print trip_delay
-    message = ''
+    message = u''
     if trip_delay['requested_differs']:
-        message = message + 'Vertrekt andere tijd: ' + ns_api.simple_time(trip_delay['requested_differs']) + "\n"
+        #message = message + 'Vertrekt andere tijd: ' + ns_api.simple_time(trip_delay['requested_differs']) + "\n"
+        #message = message + u'↦ ' + ns_api.simple_time(trip.requested_time) + u' ➔ ' + ns_api.simple_time(trip_delay['requested_differs'])# + "\n"
+        message = message + u'↦ ' + ns_api.simple_time(trip_delay['requested_differs']) + u' (' + ns_api.simple_time(trip.requested_time)
     if trip_delay['departure_delay']:
-        #message = message + 'Vertraging'
-        #message = message + 'Vertraging: ' + str(trip_delay['departure_delay'])
-        message = message + 'Vertraging: ' + ns_api.simple_time(trip_delay['departure_delay']) + "\n"
+        #message = message + 'Vertraging: ' + ns_api.simple_time(trip_delay['departure_delay']) + "\n"
+        message = message + u' 🕖 ' + ns_api.simple_time(trip_delay['departure_delay']) +")\n"
     if trip.arrival_time_actual != trip.arrival_time_planned:
-        message = message + 'Andere aankomsttijd: ' + ns_api.simple_time(trip.arrival_time_actual) + ' ipv ' + ns_api.simple_time(trip.arrival_time_planned) + ' (' + ns_api.simple_time(trip.arrival_time_actual - trip.arrival_time_planned) + ")\n"
+        #message = message + 'Andere aankomsttijd: ' + ns_api.simple_time(trip.arrival_time_actual) + ' ipv ' + ns_api.simple_time(trip.arrival_time_planned) + ' (' + ns_api.simple_time(trip.arrival_time_actual - trip.arrival_time_planned) + ")\n"
+        message = message + u'⇥ ' + ns_api.simple_time(trip.arrival_time_actual) + u' (' + ns_api.simple_time(trip.arrival_time_planned) + u' 🕖 ' + ns_api.simple_time(trip.arrival_time_actual - trip.arrival_time_planned) + ")\n"
     subtrips = []
     for part in trip.trip_parts:
         if part.has_delay:
             subtrips.append(part.transport_type + ' naar ' + part.destination + ' van ' + ns_api.simple_time(part.departure_time) + ' vertrekt van spoor ' + part.stops[0].platform)
             for stop in part.stops:
                 if stop.delay:
-                    subtrips.append('Stop ' + stop.name + ' @ ' + ns_api.simple_time(stop.time) + ' ' + stop.delay)
-    message = message + "\n".join(subtrips)
+                    #subtrips.append('Stop ' + stop.name + ' @ ' + ns_api.simple_time(stop.time) + ' ' + stop.delay)
+                    subtrips.append(u'🚉 ' + stop.name + ' @ ' + ns_api.simple_time(stop.time) + ' ' + stop.delay)
+    message = message + u'\n'.join(subtrips)
     return {'header': trip.trip_parts[0].transport_type + ' ' + trip.departure + '-' + trip.destination + ' (' + ns_api.simple_time(trip.requested_time) + ')', 'message': message}
 
 
