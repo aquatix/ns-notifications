@@ -17,7 +17,7 @@ cd ns-notifications
 ln -s ../ns-api/ns_api
 ```
 
-Create a new virtualenv (`mkvirtualenv` is a command when you have [virtualenvwrapper](https://virtualenvwrapper.readthedocs.org/en/latest/) installed) and install the dependencies:
+Create a new virtualenv (`mkvirtualenv` is a command when you have [virtualenvwrapper](https://virtualenvwrapper.readthedocs.org/en/latest/) installed - you can do so with `sudo apt-get install virtualenvwrapper`) and install the dependencies:
 
 ```
 mkvirtualenv ns-notifications

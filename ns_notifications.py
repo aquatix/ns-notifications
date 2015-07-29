@@ -248,6 +248,14 @@ elif __name__ == '__main__':
         #logger.info('no run tuple in memcache, creating')
         mc.set('nsapi_run', should_run)
 
+
+    # HACK, change when moved to Click and parameters
+    try:
+        if settings.skip_trips == True and settings.skip_disruptions == False:
+            should_run = True
+    except AttributeError:
+        logger.error('Tried overriding should_run, but no skip_* found')
+
     #print('should run? ' + str(should_run))
     logger.debug('Should run: ' + str(should_run))
 
