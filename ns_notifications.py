@@ -268,7 +268,7 @@ elif __name__ == '__main__':
         if settings.skip_disruptions:
             get_disruptions = False
     except AttributeError:
-        logger.error('Missing pushbullet_channel_tag setting')
+        logger.error('Missing skip_disruptions setting')
     if get_disruptions:
         try:
             disruptions = nsapi.get_disruptions()
@@ -280,15 +280,21 @@ elif __name__ == '__main__':
 
 
     ## Get the information on the list of trips configured by the user
+    trips = []
+    get_trips = True
     try:
-        trips = get_changed_trips(mc, settings.routes, userkey)
-        #print(trips)
-    except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError) as e:
-        print('[ERROR] connectionerror doing trips')
-        logger.error('Exception doing trips ' + repr(e))
-        errors.append(('Exception doing trips', e))
-        trips = []
-
+        if settings.skip_trips:
+            get_trips = False
+    except AttributeError:
+        logger.error('Missing skip_trips setting')
+    if get_trips:
+        try:
+            trips = get_changed_trips(mc, settings.routes, userkey)
+            #print(trips)
+        except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError) as e:
+            print('[ERROR] connectionerror doing trips')
+            logger.error('Exception doing trips ' + repr(e))
+            errors.append(('Exception doing trips', e))
 
 
     if settings.notification_type == 'pb':

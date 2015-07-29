@@ -22,6 +22,9 @@ pushbullet_channel_tag = 'yourPushBulletChannelTag'
 # See for example https://www.pushbullet.com/channel?tag=treinverstoringen
 skip_disruptions = False
 
+# If you are only interested in disruptions, you might want to disable the trips (routes)
+skip_trips = False
+
 # Uncomment the next two lines if you only want ERROR-level logging (or change to logging.WARNING for example)
 #import logging
 #debug_level = logging.ERROR
