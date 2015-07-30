@@ -158,7 +158,7 @@ def get_changed_trips(mc, routes, userkey):
     trips = []
 
     for route in routes:
-        if len(route['time']) == 5:
+        if len(route['time']) <= 5:
             route_time = datetime.datetime.strptime(today_date + " " + route['time'], "%d-%m-%Y %H:%M")
         else:
             route_time = datetime.datetime.strptime(route['time'], "%d-%m-%Y %H:%M")
