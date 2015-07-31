@@ -51,6 +51,14 @@ After receiving the key, put it together with the email address you used in `set
 
 It can be disabled by setting the `nsapi_run` tuple in memcache to `False`.
 
+
+## Screenshot
+
+![PushBullet notifications](http://aquariusoft.org/files/projects/20150729_ns-notifications.png)
+
+
+## Web frontend
+
 `server.py` has been included to provide a web interface. You can just run that file and it will enable a simple website to be available on your server at port 8086.
 
 ```
