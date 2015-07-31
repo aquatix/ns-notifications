@@ -1,5 +1,5 @@
 # ns-notifications
-Get notified when your NS (Dutch Railways) train is delayed, or makes a quick transfer which normally you wouldn't catch possible
+Get notified when your NS (Dutch Railways) train is delayed, or makes a quick transfer which normally you wouldn't catch possible. Makes use of the [ns-api](https://github.com/aquatix/ns-api) library.
 
 ## Installation
 
@@ -17,10 +17,12 @@ cd ns-notifications
 ln -s ../ns-api/ns_api
 ```
 
+First check if you use a version of Python that's at least 2.7.9: `python --version`. If not, *go to* the "Python <2.7.9" section first!
+
 Create a new virtualenv (`mkvirtualenv` is a command when you have [virtualenvwrapper](https://virtualenvwrapper.readthedocs.org/en/latest/) installed - you can do so with `sudo apt-get install virtualenvwrapper`) and install the dependencies:
 
 ```
-mkvirtualenv ns-notifications
+mkvirtualenv ns-notifications   # only if you didn't do so already 
 pip install -r requirements.txt
 ```
 
@@ -31,6 +33,22 @@ Also, memcached itself has to be running (e.g., `apt-get install memcached`; ns-
 Then copy `settings_example.py` to `settings.py` and modify the configuration to your needs. You might want to check what id your desired device has in the Pushbullet list. If an invalid id is provided, ns_notifications.py will provide you with a list of your devices with their corresponding id's.
 
 N.B.: if you encounter issues after updating from the repo, try checking [settings_example.py](settings_example.py) against your settings.py. Some new configuration items might be added.
+
+
+### Python <2.7.9
+
+If you run an older version of Python (for example Ubuntu 14.04 LTS ships with 2.7.6), the `requests` library needs a more secure version of the ssl sub system.
+
+On Ubuntu, first install some SSL and Python header files and then install the `requests` extension:
+
+```
+mkvirtualenv ns-notifications   # if you didn't do so already
+sudo apt-get install python-dev libffi-dev libssl-dev
+pip install 'requests[security]'
+```
+
+Now continue with the steps above, starting from the line with `requirements.txt`.
+
 
 ### NS API key
 
