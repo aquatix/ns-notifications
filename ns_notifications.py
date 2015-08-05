@@ -46,7 +46,7 @@ def json_deserializer(key, value, flags):
 
 
 def format_disruption(disruption):
-    return {'header': 'Traject: ' + disruption.line, 'message': u'⚠ ' + disruption.reason + "\n" + disruption.message}
+    return {'timestamp': ns_api.simple_time(disruption.timestamp), 'header': u'Traject: ' + disruption.line, 'message': u'⚠ ' + disruption.reason + "\n" + disruption.message}
     #return {'header': 'Traject: ' + disruption.line, 'message': disruption.reason + "\n" + disruption.message}
 
 
@@ -66,6 +66,14 @@ def format_trip(trip, text_type='long'):
     if trip.arrival_time_actual != trip.arrival_time_planned:
         #message = message + 'Andere aankomsttijd: ' + ns_api.simple_time(trip.arrival_time_actual) + ' ipv ' + ns_api.simple_time(trip.arrival_time_planned) + ' (' + ns_api.simple_time(trip.arrival_time_actual - trip.arrival_time_planned) + ")\n"
         message = message + u'⇥ ' + ns_api.simple_time(trip.arrival_time_actual) + u' (' + ns_api.simple_time(trip.arrival_time_planned) + u' 🕖 ' + ns_api.simple_time(trip.arrival_time_actual - trip.arrival_time_planned) + ")\n"
+
+    if trip.trip_remarks:
+        for remark in trip.trip_remarks:
+            if remark.is_grave:
+                message = u'⚠ ' + message + remark + '\n'
+            else:
+                message = u'★ ' + message + remark + '\n'
+
     subtrips = []
     for part in trip.trip_parts:
         if part.has_delay:
