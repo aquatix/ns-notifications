@@ -47,8 +47,10 @@ def nsapi_status():
         for disruption in disruptions:
             message = format_disruption(disruption)
             logger.debug(message)
-            result.append('<h3>' + message['header'] + '</h3>')
+            result.append(u'<h3>' + message['header'] + '</h3>')
             if message['message']:
+                if message['timestamp']:
+                    result.append('<p>' + message['timestamp'] + '</p>')
                 result.append('<pre>' + message['message'] + '</pre>')
             else:
                 result.append('<pre>Nothing to see here</pre>')
@@ -75,7 +77,7 @@ def nsapi_status():
         track.log()
         #abort(500)
     result.append('</body></html>')
-    return "\n".join(result)
+    return u'\n'.join(result)
 
 @app.route('/disable/<location>')
 def disable_notifier(location=None):
