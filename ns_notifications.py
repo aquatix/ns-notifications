@@ -256,13 +256,12 @@ elif __name__ == '__main__':
     current_version = None
     version = mc.get('ns-notifier_version')
     if not version:
-        version = check_version()
+        version = check_version().replace('\n', '')
         with open ("VERSION", "r") as versionfile:
             current_version = versionfile.read().replace('\n', '')
         if version != current_version:
             needs_updating = True
             mc.set('ns-notifier_version', version, MEMCACHE_VERSIONCHECK_TTL)
-
 
     ## NS Notifier userkey (will come from url/cli parameter in the future)
     try:
