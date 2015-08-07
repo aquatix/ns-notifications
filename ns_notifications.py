@@ -3,6 +3,7 @@
 NS trip notifier
 """
 from ns_api import ns_api
+import click
 from pushbullet import PushBullet
 import pushbullet
 from pymemcache.client import Client as MemcacheClient
@@ -56,6 +57,52 @@ def check_version():
         return response.text
 
 
+def get_logger():
+    """
+    Create logging handler
+    """
+    ## Create logger
+    logger = logging.getLogger('ns_notifications')
+    logger.setLevel(logging.DEBUG)
+    # create file handler which logs even debug messages
+    fh = logging.FileHandler('ns_notifications.log')
+    fh.setLevel(logging.DEBUG)
+    # create formatter and add it to the handlers
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    fh.setFormatter(formatter)
+    # add the handlers to the logger
+    logger.addHandler(fh)
+    return logger
+
+
+def get_pushbullet_config():
+
+    api_key = settings.pushbullet_key
+    try:
+        p = PushBullet(api_key)
+    except pushbullet.errors.InvalidKeyError:
+        print('Invalid PushBullet key')
+        sys.exit(1)
+    devs = p.devices
+    sendto_device = None
+    try:
+        if settings.pushbullet_device_id != None:
+            for dev in devs:
+                #print dev.device_iden + ' ' + dev.nickname
+                if dev.device_iden == settings.pushbullet_device_id:
+                    sendto_device = dev
+    except AttributeError:
+        # pushbullet_device_id wasn't even found in settings.py
+        pass
+    if not sendto_device:
+        print "Please select a device from the PushBullet list and set as pushbullet_device_id in settings.py"
+        for dev in devs:
+            print("{: >20} {: >40}".format(dev.device_iden, dev.nickname))
+        #sys.exit(1)
+
+    return p, sendto_device
+
+
 ## Format messages
 def format_disruption(disruption):
     return {'timestamp': ns_api.simple_time(disruption.timestamp), 'header': u'Traject: ' + disruption.line, 'message': u'⚠ ' + disruption.reason + "\n" + disruption.message}
@@ -95,10 +142,11 @@ def format_trip(trip, text_type='long'):
                     #subtrips.append('Stop ' + stop.name + ' @ ' + ns_api.simple_time(stop.time) + ' ' + stop.delay)
                     subtrips.append(u'🚉 ' + stop.name + ' @ ' + ns_api.simple_time(stop.time) + ' ' + stop.delay)
     message = message + u'\n'.join(subtrips)
+    message = message + '\n\n(ns-notifier)'
     return {'header': trip.trip_parts[0].transport_type + ' ' + trip.departure + '-' + trip.destination + ' (' + ns_api.simple_time(trip.requested_time) + ')', 'message': message}
 
 
-def get_stations(mc):
+def get_stations(mc, nsapi):
     """
     Get the list of all stations, put in cache if not already there
     """
@@ -162,7 +210,7 @@ def get_changed_disruptions(mc, disruptions):
     return new_or_changed_unplanned
 
 
-def get_changed_trips(mc, routes, userkey):
+def get_changed_trips(mc, nsapi, routes, userkey):
     """
     Get the new or changed trips for userkey
     """
@@ -217,35 +265,38 @@ def get_changed_departures(mc, station, userkey):
         print departures
 
     except requests.exceptions.ConnectionError as e:
-        print('[ERROR] connectionerror doing departures')
+        #print('[ERROR] connectionerror doing departures')
         errors.append(('Exception doing departures', e))
 
 
 
+@click.group()
+def cli():
+    """
+    NS-Notifications
+    """
+    #run_all_notifications()
+    #print 'right'
+    pass
 
 
-if not hasattr(main, '__file__'):
+#@cli.command('run_disruptions')
+@cli.command()
+#@click.option('-f', '--feedname', prompt='Feed name')
+def run_disruptions():
     """
-    Running in interactive mode in the Python shell
+    Only check for disruptions
     """
-    print("NS Notifier running interactively in Python shell")
+    click.secho('Needs implementing', fg='red')
 
-elif __name__ == '__main__':
-    """
-    NS Notifier is ran standalone, rock and roll
-    """
 
-    ## Create logger
-    logger = logging.getLogger('ns_notifications')
-    logger.setLevel(logging.DEBUG)
-    # create file handler which logs even debug messages
-    fh = logging.FileHandler('ns_notifications.log')
-    fh.setLevel(logging.DEBUG)
-    # create formatter and add it to the handlers
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    fh.setFormatter(formatter)
-    # add the handlers to the logger
-    logger.addHandler(fh)
+#@cli.command('run_all_notifications')
+@cli.command()
+def run_all_notifications():
+    """
+    Check for both disruptions and configured trips
+    """
+    logger = get_logger()
 
     ## Open memcache
     mc = MemcacheClient(('127.0.0.1', 11211), serializer=json_serializer,
@@ -298,7 +349,7 @@ elif __name__ == '__main__':
     nsapi = ns_api.NSAPI(settings.username, settings.apikey)
 
     ## Get the list of stations
-    stations = get_stations(mc)
+    stations = get_stations(mc, nsapi)
 
 
     ## Get the current disruptions (globally)
@@ -314,7 +365,7 @@ elif __name__ == '__main__':
             disruptions = nsapi.get_disruptions()
             changed_disruptions = get_changed_disruptions(mc, disruptions)
         except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError) as e:
-            print('[ERROR] connectionerror doing disruptions')
+            #print('[ERROR] connectionerror doing disruptions')
             logger.error('Exception doing disruptions ' + repr(e))
             errors.append(('Exception doing disruptions', e))
 
@@ -329,36 +380,17 @@ elif __name__ == '__main__':
         logger.error('Missing skip_trips setting')
     if get_trips:
         try:
-            trips = get_changed_trips(mc, settings.routes, userkey)
+            trips = get_changed_trips(mc, nsapi, settings.routes, userkey)
             #print(trips)
         except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError) as e:
-            print('[ERROR] connectionerror doing trips')
+            #print('[ERROR] connectionerror doing trips')
             logger.error('Exception doing trips ' + repr(e))
             errors.append(('Exception doing trips', e))
 
 
     if settings.notification_type == 'pb':
-        api_key = settings.pushbullet_key
-        try:
-            p = PushBullet(api_key)
-        except pushbullet.errors.InvalidKeyError:
-            print('Invalid PushBullet key')
-            sys.exit(1)
-        devs = p.devices
-        sendto_device = None
-        try:
-            if settings.pushbullet_device_id != None:
-                for dev in devs:
-                    #print dev.device_iden + ' ' + dev.nickname
-                    if dev.device_iden == settings.pushbullet_device_id:
-                        sendto_device = dev
-        except AttributeError:
-            # pushbullet_device_id wasn't even found in settings.py
-            pass
+        p, sendto_device = get_pushbullet_config()
         if not sendto_device:
-            print "Please select a device from the PushBullet list and set as pushbullet_device_id in settings.py"
-            for dev in devs:
-                print("{: >20} {: >40}".format(dev.device_iden, dev.nickname))
             sys.exit(1)
 
         if needs_updating:
@@ -397,3 +429,45 @@ elif __name__ == '__main__':
                     logger.debug(message)
                     #p.push_note('title', 'body', sendto_device)
                     p.push_note(message['header'], message['message'], sendto_device)
+
+
+@cli.command('remove_pushbullet_pushes')
+def remove_pushbullet_pushes():
+    """
+    Clean up older pushes in PushBullet config
+    """
+    print('removing pushes')
+    logger = get_logger()
+
+    p, sendto_device = get_pushbullet_config()
+
+    if not sendto_device:
+        sys.exit(1)
+
+    #pushes = p.get_pushes()
+    pushes = p.get_pushes(None, 1000)
+    #print pushes
+    print len(pushes)
+    for push in pushes[1]:
+        tag_disruption = 'Traject: '
+        tag_trip = '(ns-notification)'
+        print push['title'][0:len(tag_disruption)]
+        print push['body'][(-1 * len(tag_trip)):]
+        if (push['title'][0:len(tag_disruption)] == tag_disruption) or (push['body'][(-1 * len(tag_trip)):] == tag_trip):
+            print ("deleting " + str(push))
+            logger.info("deleting " + str(push))
+            p.delete_push(push['iden'])
+
+
+if not hasattr(main, '__file__'):
+    """
+    Running in interactive mode in the Python shell
+    """
+    print("NS Notifier running interactively in Python shell")
+
+elif __name__ == '__main__':
+    """
+    NS Notifier is ran standalone, rock and roll
+    """
+    cli()
+    #run_all_notifications()
