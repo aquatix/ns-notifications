@@ -26,6 +26,7 @@ MAX_TIME_FUTURE = 3600
 
 # Set max time to live for a key to an hour
 MEMCACHE_TTL = 3600
+MEMCACHE_VERSIONCHECK_TTL = 3600 * 12
 
 
 ## Helper functions for memcache serialisation
@@ -45,6 +46,17 @@ def json_deserializer(key, value, flags):
     raise Exception("Unknown serialization format")
 
 
+## Check for an update of the notifier
+def check_version():
+    url = 'https://raw.githubusercontent.com/aquatix/ns-notifications/master/VERSION'
+    response = requests.get(url)
+    if response.status_code == 404:
+        return None
+    else:
+        return response.text
+
+
+## Format messages
 def format_disruption(disruption):
     return {'timestamp': ns_api.simple_time(disruption.timestamp), 'header': u'Traject: ' + disruption.line, 'message': u'⚠ ' + disruption.reason + "\n" + disruption.message}
     #return {'header': 'Traject: ' + disruption.line, 'message': disruption.reason + "\n" + disruption.message}
@@ -239,6 +251,19 @@ elif __name__ == '__main__':
     mc = MemcacheClient(('127.0.0.1', 11211), serializer=json_serializer,
             deserializer=json_deserializer)
 
+    ## Check whether there's a new version of this notifier
+    needs_updating = False
+    current_version = None
+    version = mc.get('ns-notifier_version')
+    if not version:
+        version = check_version()
+        with open ("VERSION", "r") as versionfile:
+            current_version = versionfile.read().replace('\n', '')
+        if version != current_version:
+            needs_updating = True
+            mc.set('ns-notifier_version', version, MEMCACHE_VERSIONCHECK_TTL)
+
+
     ## NS Notifier userkey (will come from url/cli parameter in the future)
     try:
         userkey = settings.userkey
@@ -336,6 +361,10 @@ elif __name__ == '__main__':
             for dev in devs:
                 print("{: >20} {: >40}".format(dev.device_iden, dev.nickname))
             sys.exit(1)
+
+        if needs_updating:
+            p.push_note('ns-notifications needs updating', 'Current version: ' + str(current_version) + '\nNew version: ' + str(version))
+
         if changed_disruptions:
             # There are disruptions that are new or changed since last run
             sendto_channel = None
