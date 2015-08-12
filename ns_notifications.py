@@ -29,6 +29,8 @@ MAX_TIME_FUTURE = 3600
 MEMCACHE_TTL = 3600
 MEMCACHE_VERSIONCHECK_TTL = 3600 * 12
 
+VERSION_NSAPI = '2.1'
+
 
 ## Helper functions for memcache serialisation
 def json_serializer(key, value):
@@ -48,13 +50,43 @@ def json_deserializer(key, value, flags):
 
 
 ## Check for an update of the notifier
-def check_version():
+def get_repo_version():
     url = 'https://raw.githubusercontent.com/aquatix/ns-notifications/master/VERSION'
     response = requests.get(url)
     if response.status_code == 404:
         return None
     else:
-        return response.text
+        return response.text.replace('\n', '')
+
+
+def check_versions(mc):
+    """
+    Check whether version of ns-notifier is up-to-date and ns-api is latest version too
+    """
+    message = {'header': 'ns-notifications needs updating', 'message': None}
+    current_version = None
+    version = mc.get('ns-notifier_version')
+    if not version:
+        version = get_repo_version()
+        with open ("VERSION", "r") as versionfile:
+            current_version = versionfile.read().replace('\n', '')
+        if version != current_version:
+            message['message'] = 'Current version: ' + str(current_version) + '\nNew version: ' + str(version)
+            mc.set('ns-notifier_version', version, MEMCACHE_VERSIONCHECK_TTL)
+
+    version = mc.get('ns-api_version')
+    if not version:
+        if ns_api.__version__ != VERSION_NSAPI:
+            # ns-api needs updating
+            if message['message']:
+                message['message'] = message['message'] + '\n'
+            message['message'] = message['message'] + 'ns-api needs updating'
+            mc.set('ns-api_version', VERSION_NSAPI, MEMCACHE_VERSIONCHECK_TTL)
+
+    if not message['message']:
+        # No updating needed, return None object
+        message = None
+    return message
 
 
 def get_logger():
@@ -303,16 +335,7 @@ def run_all_notifications():
             deserializer=json_deserializer)
 
     ## Check whether there's a new version of this notifier
-    needs_updating = False
-    current_version = None
-    version = mc.get('ns-notifier_version')
-    if not version:
-        version = check_version().replace('\n', '')
-        with open ("VERSION", "r") as versionfile:
-            current_version = versionfile.read().replace('\n', '')
-        if version != current_version:
-            needs_updating = True
-            mc.set('ns-notifier_version', version, MEMCACHE_VERSIONCHECK_TTL)
+    update_message = check_versions(mc)
 
     ## NS Notifier userkey (will come from url/cli parameter in the future)
     try:
@@ -393,8 +416,8 @@ def run_all_notifications():
         if not sendto_device:
             sys.exit(1)
 
-        if needs_updating:
-            p.push_note('ns-notifications needs updating', 'Current version: ' + str(current_version) + '\nNew version: ' + str(version))
+        if update_message:
+            p.push_note(update_message['header'], update_message['message'])
 
         if changed_disruptions:
             # There are disruptions that are new or changed since last run
