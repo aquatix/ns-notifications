@@ -7,4 +7,9 @@ if [ $INVENV == 0 ]; then
     source /usr/share/virtualenvwrapper/virtualenvwrapper.sh
     workon ns-notifications
 fi
-python ns_notifications.py run_all_notifications
+
+if [ -z "$1" ]; then
+    python ns_notifications.py run_all_notifications
+elif [ "$1" == "clearpb" ]; then
+    python ns_notifications.py clear_pushbullet
+fi
