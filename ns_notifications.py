@@ -350,6 +350,13 @@ def run_all_notifications():
 
     ## Check whether there's a new version of this notifier
     update_message = check_versions(mc)
+    try:
+        if update_message and settings.auto_update:
+            open('needs_updating', 'a').close()
+            update_message = None
+    except AttributeError:
+        # 'auto_update' likely not defined in settings.py, default to False
+        pass
 
     ## NS Notifier userkey (will come from url/cli parameter in the future)
     try:
