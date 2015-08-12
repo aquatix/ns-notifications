@@ -10,9 +10,14 @@ fi
 
 if [ -z "$1" ]; then
     python ns_notifications.py run_all_notifications
-elif [ "$1" == "clearpb" ]; then
-    python ns_notifications.py clear_pushbullet
+#elif [ "$1" == "clearpb" ]; then
+#    python ns_notifications.py clear_pushbullet
 elif [ "$1" == "upgrade" ]; then
     git pull
     pip install -r requirements.txt
+    python ns_notifications.py updated
+elif [ "$1" == "help" ]; then
+    python ns_notifications.py
+else
+    python ns_notifications.py $1
 fi

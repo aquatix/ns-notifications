@@ -59,6 +59,10 @@ def get_repo_version():
         return response.text.replace('\n', '')
 
 
+def get_local_version():
+    with open ("VERSION", "r") as versionfile:
+        return versionfile.read().replace('\n', '')
+
 def check_versions(mc):
     """
     Check whether version of ns-notifier is up-to-date and ns-api is latest version too
@@ -68,8 +72,7 @@ def check_versions(mc):
     version = mc.get('ns-notifier_version')
     if not version:
         version = get_repo_version()
-        with open ("VERSION", "r") as versionfile:
-            current_version = versionfile.read().replace('\n', '')
+        current_version = get_local_version()
         if version != current_version:
             message['message'] = 'Current version: ' + str(current_version) + '\nNew version: ' + str(version)
             mc.set('ns-notifier_version', version, MEMCACHE_VERSIONCHECK_TTL)
@@ -428,7 +431,7 @@ def run_all_notifications():
             sys.exit(1)
 
         if update_message:
-            p.push_note(update_message['header'], update_message['message'])
+            p.push_note(update_message['header'], update_message['message'], sendto_device)
 
         if changed_disruptions:
             # There are disruptions that are new or changed since last run
@@ -492,6 +495,33 @@ def remove_pushbullet_pushes():
             logger.info("deleting " + str(push))
             p.delete_push(push['iden'])
 
+
+@cli.command()
+def updated():
+    """
+    Send 'ns-notifcations was updated' message after (automatic) upgrade
+    """
+    if settings.notification_type == 'pb':
+        p, sendto_device = get_pushbullet_config()
+        if not sendto_device:
+            sys.exit(1)
+
+        local_version = get_local_version()
+        p.push_note('ns-notifier updated', 'Notifier was updated to ' + local_version + ', details might be in your (cron) email', sendto_device)
+
+
+@cli.command()
+def test():
+    """
+    Send test message
+    """
+    if settings.notification_type == 'pb':
+        p, sendto_device = get_pushbullet_config()
+        if not sendto_device:
+            sys.exit(1)
+
+        local_version = get_local_version()
+        p.push_note('ns-notifier test', 'Test message from ns-notifier ' + local_version + '. Godspeed!', sendto_device)
 
 if not hasattr(main, '__file__'):
     """
