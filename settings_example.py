@@ -1,7 +1,12 @@
 # Example configuration. Copy to settings.py and modify to your needs
+
+# NS API configuration
 username = 'your@email.address'
 apikey = 'someVeryLongKeyThatNSWillProvideYou'
 # https://www.ns.nl/ews-aanvraagformulier/
+
+# If you'd like ns-notifications to automatically do a `git pull` when a new version is detected, set to True
+auto_update = False
 
 # Notifications types:
 # pb: PushBullet
@@ -34,10 +39,10 @@ skip_trips = False
 routes = [
         {'departure': 'Heemskerk', 'destination': 'Hoofddorp', 'time': '7:44', 'keyword': 'Beverwijk', 'minimum': 5 },
          {'departure': 'Amsterdam Sloterdijk', 'destination': 'Hoofddorp', 'time': '8:19', 'keyword': None },
-         {'departure': 'Schiphol', 'destination': 'Hoofddorp', 'time': '9:15', 'keyword': None },
+         {'departure': 'Schiphol', 'destination': 'Hoofddorp', 'time': '9:15' },
          {'departure': 'Hoofddorp', 'destination': 'Heemskerk', 'time': '17:05', 'keyword': 'Hoorn', 'minimum': 3 },
          {'departure': 'Amsterdam Sloterdijk', 'destination': 'Heemskerk', 'time': '17:39', 'keyword': 'Haarlem' },
          #{'departure': 'Amsterdam Sloterdijk', 'destination': 'Nijmegen', 'time': '21:40', 'keyword': None }, # test
-         #{'departure': 'Amsterdam Sloterdijk', 'destination': 'Schiphol', 'time': '22:19', 'keyword': None }, # test
-         #{'departure': 'Amsterdam Sloterdijk', 'destination': 'Amersfoort', 'time': '22:09', 'keyword': None }, # test
+         #{'departure': 'Amsterdam Sloterdijk', 'destination': 'Schiphol', 'time': '22:19' }, # test
+         #{'departure': 'Amsterdam Sloterdijk', 'destination': 'Amersfoort', 'time': '22:09' }, # test
          ]
