@@ -22,7 +22,7 @@ First check if you use a version of Python that's at least 2.7.9: `python --vers
 Create a new virtualenv (`mkvirtualenv` is a command when you have [virtualenvwrapper](https://virtualenvwrapper.readthedocs.org/en/latest/) installed - you can do so with `sudo apt-get install virtualenvwrapper`) and install the dependencies:
 
 ```
-mkvirtualenv ns-notifications   # only if you didn't do so already 
+mkvirtualenv ns-notifications   # only if you didn't do so already
 pip install -r requirements.txt
 ```
 
@@ -33,6 +33,11 @@ Also, memcached itself has to be running (e.g., `apt-get install memcached`; ns-
 Then copy `settings_example.py` to `settings.py` and modify the configuration to your needs. You might want to check what id your desired device has in the Pushbullet list. If an invalid id is provided, ns_notifications.py will provide you with a list of your devices with their corresponding id's.
 
 N.B.: if you encounter issues after updating from the repo, try checking [settings_example.py](settings_example.py) against your settings.py. Some new configuration items might be added.
+
+
+### Upgrading
+
+If you got a notification that ns-notifier needs upgrading, you can run `./run_notifier upgrade`. This will do a `git pull` and other necessary updates. Updating ns-api can't be done (yet) through this method though. To upgrade, just do a `git pull` in its directory.
 
 
 ### Python <2.7.9
