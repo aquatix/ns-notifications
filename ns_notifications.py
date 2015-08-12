@@ -254,7 +254,6 @@ def get_changed_trips(mc, nsapi, routes, userkey):
     if prev_trips == None:
         prev_trips = []
     prev_trips = ns_api.list_from_json(prev_trips)
-    #print prev_trips
     trips = []
 
     for route in routes:
@@ -278,7 +277,20 @@ def get_changed_trips(mc, nsapi, routes, userkey):
         if not optimal_trip:
             print "Optimal not found. Alert?"
             # TODO: Get the trip before and the one after route['time']?
-        trips.append(optimal_trip)
+        else:
+            print route
+            try:
+                # User set a minimum treshold for departure, skip if within this limit
+                minimal_delay = int(route['minimum'])
+                trip_delay = optimal_trip.delay
+                if (not optimal_trip.has_delay) or (optimal_trip.has_delay and trip_delay['departure_delay'] < minimal_delay):
+                    # Trip has no delay or one that is below threshold, ignore
+                    optimal_trip = None
+            except KeyError:
+                # No 'minimum' setting found, just continue
+                pass
+        if optimal_trip:
+            trips.append(optimal_trip)
         #print(optimal_trip)
 
     new_or_changed_trips = ns_api.list_diff(prev_trips, trips)
