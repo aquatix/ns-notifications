@@ -278,7 +278,6 @@ def get_changed_trips(mc, nsapi, routes, userkey):
             print "Optimal not found. Alert?"
             # TODO: Get the trip before and the one after route['time']?
         else:
-            print route
             try:
                 # User set a minimum treshold for departure, skip if within this limit
                 minimal_delay = int(route['minimum'])
