@@ -282,7 +282,7 @@ def get_changed_trips(mc, nsapi, routes, userkey):
                 # User set a minimum treshold for departure, skip if within this limit
                 minimal_delay = int(route['minimum'])
                 trip_delay = optimal_trip.delay
-                if (not optimal_trip.has_delay) or (optimal_trip.has_delay and trip_delay['departure_delay'] < minimal_delay):
+                if (not optimal_trip.has_delay) or (optimal_trip.has_delay and trip_delay['departure_delay'].seconds//3600 < minimal_delay):
                     # Trip has no delay or one that is below threshold, ignore
                     optimal_trip = None
             except KeyError:
