@@ -129,9 +129,9 @@ def format_trip(trip, text_type='long'):
     if trip.trip_remarks:
         for remark in trip.trip_remarks:
             if remark.is_grave:
-                message = u'⚠ ' + message + remark + '\n'
+                message = u'⚠ ' + message + remark.message + '\n'
             else:
-                message = u'★ ' + message + remark + '\n'
+                message = u'★ ' + message + remark.message + '\n'
 
     subtrips = []
     for part in trip.trip_parts:
