@@ -276,7 +276,8 @@ def get_changed_trips(mc, nsapi, routes, userkey):
         except KeyError:
             keyword = None
         current_trips = nsapi.get_trips(route['time'], route['departure'], keyword, route['destination'], True)
-        optimal_trip = ns_api.Trip.get_optimal(current_trips, route['time'])
+        optimal_trip = ns_api.Trip.get_actual(current_trips, route['time'])
+        #optimal_trip = ns_api.Trip.get_optimal(current_trips, route['time'])
         if not optimal_trip:
             print "Optimal not found. Alert?"
             # TODO: Get the trip before and the one after route['time']?
@@ -352,6 +353,7 @@ def run_all_notifications():
     update_message = check_versions(mc)
     try:
         if update_message and settings.auto_update:
+            # TODO: make sure it is created in same dir as this python script
             open('needs_updating', 'a').close()
             update_message = None
     except AttributeError:
