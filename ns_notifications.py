@@ -29,7 +29,7 @@ MAX_TIME_FUTURE = 3600
 MEMCACHE_TTL = 3600
 MEMCACHE_VERSIONCHECK_TTL = 3600 * 12
 
-VERSION_NSAPI = '2.1'
+VERSION_NSAPI = '2.2'
 
 
 ## Helper functions for memcache serialisation
@@ -286,8 +286,8 @@ def get_changed_trips(mc, nsapi, routes, userkey):
                 # User set a minimum treshold for departure, skip if within this limit
                 minimal_delay = int(route['minimum'])
                 trip_delay = optimal_trip.delay
-                if (not optimal_trip.has_delay) or (optimal_trip.has_delay and trip_delay['departure_delay'].seconds//3600 < minimal_delay):
-                    # Trip has no delay or one that is below threshold, ignore
+                if (not optimal_trip.has_delay) or (optimal_trip.has_delay and trip_delay['departure_delay'].seconds//60 < minimal_delay and optimal_trip.going):
+                    # Trip is going, has no delay or one that is below threshold, ignore
                     optimal_trip = None
             except KeyError:
                 # No 'minimum' setting found, just continue
