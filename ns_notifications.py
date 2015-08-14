@@ -29,7 +29,7 @@ MAX_TIME_FUTURE = 3600
 MEMCACHE_TTL = 3600
 MEMCACHE_VERSIONCHECK_TTL = 3600 * 12
 
-VERSION_NSAPI = '2.2'
+VERSION_NSAPI = '2.3'
 
 
 ## Helper functions for memcache serialisation
@@ -83,6 +83,8 @@ def check_versions(mc):
             # ns-api needs updating
             if message['message']:
                 message['message'] = message['message'] + '\n'
+            else:
+                message['message'] = ''
             message['message'] = message['message'] + 'ns-api needs updating'
             mc.set('ns-api_version', VERSION_NSAPI, MEMCACHE_VERSIONCHECK_TTL)
 
@@ -110,7 +112,7 @@ def get_logger():
     return logger
 
 
-def get_pushbullet_config():
+def get_pushbullet_config(logger=None):
 
     api_key = settings.pushbullet_key
     try:
@@ -118,6 +120,10 @@ def get_pushbullet_config():
     except pushbullet.errors.InvalidKeyError:
         print('Invalid PushBullet key')
         sys.exit(1)
+    except requests.exceptions.ConnectionError as e:
+        if logger:
+            logger.error('PushBullet connection error while getting config - ' + str(e))
+        return None, None
     devs = p.devices
     sendto_device = None
     try:
@@ -286,7 +292,7 @@ def get_changed_trips(mc, nsapi, routes, userkey):
                 # User set a minimum treshold for departure, skip if within this limit
                 minimal_delay = int(route['minimum'])
                 trip_delay = optimal_trip.delay
-                if (not optimal_trip.has_delay) or (optimal_trip.has_delay and trip_delay['departure_delay'].seconds//60 < minimal_delay and optimal_trip.going):
+                if (not optimal_trip.has_delay) or (optimal_trip.has_delay and trip_delay['departure_delay'] != None and trip_delay['departure_delay'].seconds//60 < minimal_delay and optimal_trip.going):
                     # Trip is going, has no delay or one that is below threshold, ignore
                     optimal_trip = None
             except KeyError:
@@ -441,7 +447,7 @@ def run_all_notifications():
         pass
 
     if settings.notification_type == 'pb':
-        p, sendto_device = get_pushbullet_config()
+        p, sendto_device = get_pushbullet_config(logger)
         if not sendto_device:
             sys.exit(1)
 
@@ -496,7 +502,7 @@ def remove_pushbullet_pushes():
     print('removing pushes')
     logger = get_logger()
 
-    p, sendto_device = get_pushbullet_config()
+    p, sendto_device = get_pushbullet_config(logger)
 
     if not sendto_device:
         sys.exit(1)
@@ -521,8 +527,9 @@ def updated():
     """
     Send 'ns-notifcations was updated' message after (automatic) upgrade
     """
+    logger = get_logger()
     if settings.notification_type == 'pb':
-        p, sendto_device = get_pushbullet_config()
+        p, sendto_device = get_pushbullet_config(logger)
         if not sendto_device:
             sys.exit(1)
 
@@ -535,8 +542,9 @@ def test():
     """
     Send test message
     """
+    logger = get_logger()
     if settings.notification_type == 'pb':
-        p, sendto_device = get_pushbullet_config()
+        p, sendto_device = get_pushbullet_config(logger)
         if not sendto_device:
             sys.exit(1)
 
