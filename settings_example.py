@@ -30,6 +30,9 @@ skip_disruptions = False
 # If you are only interested in disruptions, you might want to disable the trips (routes)
 skip_trips = False
 
+# If you are not interested in delays upon arrival (so only the departure of the whole trip), set to False
+arrival_delays = True
+
 # Uncomment the next two lines if you only want ERROR-level logging (or change to logging.WARNING for example)
 #import logging
 #debug_level = logging.ERROR

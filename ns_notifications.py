@@ -433,6 +433,12 @@ def run_all_notifications():
             logger.error('Exception doing trips ' + repr(e))
             errors.append(('Exception doing trips', e))
 
+    # User is interested in arrival delays
+    arrival_delays = True
+    try:
+        arrival_delays = settings.arrival_delays
+    except AttributeError:
+        pass
 
     if settings.notification_type == 'pb':
         p, sendto_device = get_pushbullet_config()
@@ -469,7 +475,12 @@ def run_all_notifications():
                     p.push_note(message['header'], message['message'], sendto_device)
         if trips:
             for trip in trips:
-                if trip.has_delay:
+                if not arrival_delays:
+                    # User is only interested in departure
+                    notification_needed = trip.has_departure_delay
+                else:
+                    notification_needed = trip.has_delay
+                if notification_needed:
                     message = format_trip(trip)
                     #print message
                     logger.debug(message)
