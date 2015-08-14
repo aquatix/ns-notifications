@@ -506,7 +506,6 @@ def remove_pushbullet_pushes():
     """
     Clean up older pushes in PushBullet config
     """
-    print('removing pushes')
     logger = get_logger()
 
     p, sendto_device = get_pushbullet_config(logger)
@@ -514,19 +513,25 @@ def remove_pushbullet_pushes():
     if not sendto_device:
         sys.exit(1)
 
-    #pushes = p.get_pushes()
+    # Only get the latest 1000 as history might be huge
     pushes = p.get_pushes(None, 1000)
-    #print pushes
-    print len(pushes)
+    logger.debug('Removing pushes, found: ' + str(len(pushes[1])))
+    counter = 0
     for push in pushes[1]:
         tag_disruption = 'Traject: '
         tag_trip = '(ns-notification)'
-        print push['title'][0:len(tag_disruption)]
-        print push['body'][(-1 * len(tag_trip)):]
-        if (push['title'][0:len(tag_disruption)] == tag_disruption) or (push['body'][(-1 * len(tag_trip)):] == tag_trip):
-            print ("deleting " + str(push))
-            logger.info("deleting " + str(push))
-            p.delete_push(push['iden'])
+        try:
+            #print push['title'][0:len(tag_disruption)]
+            #print push['body'][(-1 * len(tag_trip)):]
+            if (push['title'][0:len(tag_disruption)] == tag_disruption) or (push['body'][(-1 * len(tag_trip)):] == tag_trip):
+                #print ("deleting " + str(push))
+                counter = counter + 1
+                logger.debug("deleting " + str(push))
+                p.delete_push(push['iden'])
+        except KeyError:
+            # Likely 'body' not found, skipping
+            pass
+    logger.info('Finished removing pushes, deleted: ' + str(counter))
 
 
 @cli.command()
