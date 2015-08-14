@@ -51,6 +51,9 @@ def json_deserializer(key, value, flags):
 
 ## Check for an update of the notifier
 def get_repo_version():
+    """
+    Get the current version on GitHub
+    """
     url = 'https://raw.githubusercontent.com/aquatix/ns-notifications/master/VERSION'
     response = requests.get(url)
     if response.status_code == 404:
@@ -60,8 +63,12 @@ def get_repo_version():
 
 
 def get_local_version():
+    """
+    Get the locally installed version
+    """
     with open ("VERSION", "r") as versionfile:
         return versionfile.read().replace('\n', '')
+
 
 def check_versions(mc):
     """
@@ -359,8 +366,8 @@ def run_all_notifications():
     update_message = check_versions(mc)
     try:
         if update_message and settings.auto_update:
-            # TODO: make sure it is created in same dir as this python script
-            open('needs_updating', 'a').close()
+            # Create (touch) file that the run_notifier script checks on for 'update needed'
+            open(os.path.dirname(os.path.realpath(__file__)) + '/needs_updating', 'a').close()
             update_message = None
     except AttributeError:
         # 'auto_update' likely not defined in settings.py, default to False

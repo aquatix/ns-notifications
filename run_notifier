@@ -1,6 +1,10 @@
 #!/bin/bash
 
 function upgrade() {
+    # Get the directory the project has been cloned into
+    DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+    # Ensure we are in the correct directory
+    cd $DIR
     git pull
     pip install -r requirements.txt
     python ns_notifications.py updated
