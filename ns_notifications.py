@@ -101,6 +101,7 @@ def check_versions(mc):
     return message
 
 
+## Often-used handles
 def get_logger():
     """
     Create logging handler
@@ -120,6 +121,9 @@ def get_logger():
 
 
 def get_pushbullet_config(logger=None):
+    """
+    Return PushBullet handle and device to send to
+    """
 
     api_key = settings.pushbullet_key
     try:
@@ -153,12 +157,17 @@ def get_pushbullet_config(logger=None):
 
 ## Format messages
 def format_disruption(disruption):
+    """
+    Format a disruption on a trajectory
+    """
     return {'timestamp': ns_api.simple_time(disruption.timestamp), 'header': u'Traject: ' + disruption.line, 'message': u'⚠ ' + disruption.reason + "\n" + disruption.message}
     #return {'header': 'Traject: ' + disruption.line, 'message': disruption.reason + "\n" + disruption.message}
 
 
 def format_trip(trip, text_type='long'):
     """
+    Format a Trip, providing an overview of all events (delays, messages etc)
+
     text_type: (long|symbol)
     """
     trip_delay = trip.delay
@@ -194,6 +203,7 @@ def format_trip(trip, text_type='long'):
     return {'header': trip.trip_parts[0].transport_type + ' ' + trip.departure + '-' + trip.destination + ' (' + ns_api.simple_time(trip.requested_time) + ')', 'message': message}
 
 
+## Retrieval
 def get_stations(mc, nsapi):
     """
     Get the list of all stations, put in cache if not already there
@@ -329,7 +339,7 @@ def get_changed_departures(mc, station, userkey):
         errors.append(('Exception doing departures', e))
 
 
-
+## Main program
 @click.group()
 def cli():
     """
