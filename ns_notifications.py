@@ -13,6 +13,7 @@ import requests
 import __main__ as main
 import logging
 import sys
+import os
 
 try:
     import settings
