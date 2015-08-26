@@ -193,7 +193,8 @@ def format_trip(trip, text_type='long'):
     subtrips = []
     for part in trip.trip_parts:
         if part.has_delay:
-            subtrips.append(part.transport_type + ' naar ' + part.destination + ' van ' + ns_api.simple_time(part.departure_time) + ' vertrekt van spoor ' + part.stops[0].platform)
+            #subtrips.append(part.transport_type + ' naar ' + part.destination + ' van ' + ns_api.simple_time(part.departure_time) + ' vertrekt van spoor ' + part.stops[0].platform)
+            subtrips.append(part.transport_type + ' naar ' + part.destination + ' van ' + ns_api.simple_time(part.departure_time) + ' (spoor ' + part.stops[0].platform + ')')
             for stop in part.stops:
                 if stop.delay:
                     #subtrips.append('Stop ' + stop.name + ' @ ' + ns_api.simple_time(stop.time) + ' ' + stop.delay)
