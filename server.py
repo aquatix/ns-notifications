@@ -87,7 +87,7 @@ def disable_notifier(location=None):
         logger.info('%s nsapi_run was %s, disabling' % (location_prefix, should_run))
     except KeyError:
         logger.info('%s no nsapi_run tuple in memcache, creating with value False' % location_prefix)
-    mc.set('nsapi_run', False)
+    mc.set('nsapi_run', False, MEMCACHE_DISABLING_TTL)
     return 'Disabling notifications'
 
 @app.route('/enable/<location>')
@@ -98,7 +98,7 @@ def enable_notifier(location=None):
         logger.info('%s nsapi_run was %s, enabling' % (location_prefix, should_run))
     except KeyError:
         logger.info('%s no nsapi_run tuple in memcache, creating with value True' % location_prefix)
-    mc.set('nsapi_run', True)
+    mc.set('nsapi_run', True, MEMCACHE_DISABLING_TTL)
     return 'Enabling notifications'
 
 if __name__ == '__main__':

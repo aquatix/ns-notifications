@@ -28,6 +28,7 @@ MAX_TIME_FUTURE = 3600
 # Set max time to live for a key to an hour
 MEMCACHE_TTL = 3600
 MEMCACHE_VERSIONCHECK_TTL = 3600 * 12
+MEMCACHE_DISABLING_TTL = 3600 * 6
 
 VERSION_NSAPI = '2.3'
 
@@ -398,7 +399,7 @@ def run_all_notifications():
     if should_run == None:
         should_run = True
         #logger.info('no run tuple in memcache, creating')
-        mc.set('nsapi_run', should_run)
+        mc.set('nsapi_run', should_run, MEMCACHE_DISABLING_TTL)
 
 
     # HACK, change when moved to Click and parameters
