@@ -84,6 +84,10 @@ It can be disabled by setting the `nsapi_run` tuple in memcache to `False`.
 
 `server.py` has been included to provide a web interface. You can just run that file and it will enable a simple website to be available on your server at port 8086.
 
+After creating the `ns-notifications` virtualenv, you will have to install the requirements for the server (type `workon ns-notifications` if you don't have the environment enabled):
+
 ```
-pip install Flask
+pip install -r requirements_server.txt
 ```
+
+Now you can run the server by starting the `run_server` script. It will open a small web server on port 8086 of your machine, which you can make GET requests on to check for the status (just the root document, so for example http://example.com:8086/), to disable notifications for a bit (/disable/<keyword>) or enable them (/enable/<keyword>). The `keyword` variable here is intended to be replaced by a location for example, which really is just for your convenience (for example when you use Tasker, you can have it do a request on http://example.com:8086/disable/work when you arrive at work, but you can put whatever text you like in there).
