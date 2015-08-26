@@ -173,15 +173,14 @@ def format_trip(trip, text_type='long'):
     trip_delay = trip.delay
     message = u''
     if trip_delay['requested_differs']:
-        #message = message + 'Vertrekt andere tijd: ' + ns_api.simple_time(trip_delay['requested_differs']) + "\n"
-        #message = message + u'↦ ' + ns_api.simple_time(trip.requested_time) + u' ➔ ' + ns_api.simple_time(trip_delay['requested_differs'])# + "\n"
-        message = message + u'↦ ' + ns_api.simple_time(trip_delay['requested_differs']) + u' (' + ns_api.simple_time(trip.requested_time)
+        #message = message + u'↦ ' + ns_api.simple_time(trip_delay['requested_differs']) + u' (' + ns_api.simple_time(trip.requested_time)
+        message = message + u'↦ ' + ns_api.simple_time(trip.requested_time)
     if trip_delay['departure_delay']:
-        #message = message + 'Vertraging: ' + ns_api.simple_time(trip_delay['departure_delay']) + "\n"
-        message = message + u' 🕖 ' + ns_api.simple_time(trip_delay['departure_delay']) +")\n"
+        #message = message + u' 🕖 ' + ns_api.simple_time(trip_delay['departure_delay']) +")\n"
+        message = message + u' +' + ns_api.simple_time(trip_delay['departure_delay']) +"\n"
     if trip.arrival_time_actual != trip.arrival_time_planned:
-        #message = message + 'Andere aankomsttijd: ' + ns_api.simple_time(trip.arrival_time_actual) + ' ipv ' + ns_api.simple_time(trip.arrival_time_planned) + ' (' + ns_api.simple_time(trip.arrival_time_actual - trip.arrival_time_planned) + ")\n"
-        message = message + u'⇥ ' + ns_api.simple_time(trip.arrival_time_actual) + u' (' + ns_api.simple_time(trip.arrival_time_planned) + u' 🕖 ' + ns_api.simple_time(trip.arrival_time_actual - trip.arrival_time_planned) + ")\n"
+        #message = message + u'⇥ ' + ns_api.simple_time(trip.arrival_time_actual) + u' (' + ns_api.simple_time(trip.arrival_time_planned) + u' 🕖 ' + ns_api.simple_time(trip.arrival_time_actual - trip.arrival_time_planned) + ")\n"
+        message = message + u'⇥ ' + ns_api.simple_time(trip.arrival_time_planned) + u' +' + ns_api.simple_time(trip.arrival_time_actual - trip.arrival_time_planned) + "\n"
 
     if trip.trip_remarks:
         for remark in trip.trip_remarks:
