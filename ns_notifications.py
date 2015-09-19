@@ -2,7 +2,7 @@
 """
 NS trip notifier
 """
-from ns_api import ns_api
+import ns_api
 import click
 from pushbullet import PushBullet
 import pushbullet
@@ -502,7 +502,7 @@ def run_all_notifications():
             for trip in trips:
                 if not arrival_delays:
                     # User is only interested in departure
-                    notification_needed = trip.has_departure_delay
+                    notification_needed = trip.has_departure_delay(subpartcheck=False)
                 else:
                     notification_needed = trip.has_delay
                 if notification_needed:
