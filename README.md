@@ -9,13 +9,7 @@ Clone this project to your local drive:
 git clone https://github.com/aquatix/ns-notifications.git
 ```
 
-As ns-api is not in [PyPI](https://pypi.python.org/pypi) yet, you'll have to clone it too and symlink it to this project:
-
-```
-git clone https://github.com/aquatix/ns-api.git
-cd ns-notifications
-ln -s ../ns-api/ns_api
-```
+nsapi is now in [PyPI](https://pypi.python.org/pypi/nsapi/)! You can now simply install it through `pip` and it's included in requirements.txt.
 
 First check if you use a version of Python that's at least 2.7.9: `python --version`. If not, *go to* the "Python <2.7.9" section first!
 
@@ -25,8 +19,6 @@ Create a new virtualenv (`mkvirtualenv` is a command when you have [virtualenvwr
 mkvirtualenv ns-notifications   # only if you didn't do so already
 pip install -r requirements.txt
 ```
-
-Run the same `pip` command in the ns-api directory so it installs the ns-api dependencies in the same virtualenv.
 
 Also, memcached itself has to be running (e.g., `apt-get install memcached`; ns-notifications assumes port 11211).
 
