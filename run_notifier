@@ -7,6 +7,11 @@ function upgrade() {
     cd $DIR
     git pull
     pip install -r requirements.txt
+    if [ -L "ns_api" ]; then
+        # Remove obsolete symlink as nsapi is installed through pip now
+        rm "ns_api"
+        echo "Removed old symlink"
+    fi
     python ns_notifications.py updated
 }
 
@@ -29,6 +34,8 @@ if [ -z "$1" ]; then
 #elif [ "$1" == "clearpb" ]; then
 #    python ns_notifications.py clear_pushbullet
 elif [ "$1" == "upgrade" ]; then
+    upgrade
+elif [ "$1" == "update" ]; then
     upgrade
 elif [ "$1" == "help" ]; then
     python ns_notifications.py
