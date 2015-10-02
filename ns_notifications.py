@@ -502,9 +502,9 @@ def run_all_notifications():
             for trip in trips:
                 if not arrival_delays:
                     # User is only interested in departure
-                    notification_needed = trip.has_departure_delay(arrival_check=False)
+                    notification_needed = trip.has_delay(arrival_check=False)
                 else:
-                    notification_needed = trip.has_delay
+                    notification_needed = trip.has_delay()
                 if notification_needed:
                     message = format_trip(trip)
                     #print message
