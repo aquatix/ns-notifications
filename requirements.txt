@@ -1,6 +1,6 @@
 argparse==1.2.1
 click==5.1
-nsapi==2.3.5
+nsapi==2.4
 pushbullet.py==0.8.1
 pymemcache==1.3.4
 requests==2.7.0
