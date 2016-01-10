@@ -31,7 +31,7 @@ MEMCACHE_TTL = 3600
 MEMCACHE_VERSIONCHECK_TTL = 3600 * 12
 MEMCACHE_DISABLING_TTL = 3600 * 6
 
-VERSION_NSAPI = '2.4'
+VERSION_NSAPI = '2.5'
 
 
 ## Helper functions for memcache serialisation
