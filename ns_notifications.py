@@ -31,7 +31,7 @@ MEMCACHE_TTL = 3600
 MEMCACHE_VERSIONCHECK_TTL = 3600 * 12
 MEMCACHE_DISABLING_TTL = 3600 * 6
 
-VERSION_NSAPI = '2.5'
+VERSION_NSAPI = '2.7.1'
 
 
 ## Helper functions for memcache serialisation
@@ -149,7 +149,7 @@ def get_pushbullet_config(logger=None):
         # pushbullet_device_id wasn't even found in settings.py
         pass
     if not sendto_device:
-        print "Please select a device from the PushBullet list and set as pushbullet_device_id in settings.py"
+        print("Please select a device from the PushBullet list and set as pushbullet_device_id in settings.py")
         for dev in devs:
             print("{: >20} {: >40}".format(dev.device_iden, dev.nickname))
         #sys.exit(1)
@@ -304,7 +304,7 @@ def get_changed_trips(mc, nsapi, routes, userkey):
         optimal_trip = ns_api.Trip.get_actual(current_trips, route['time'])
         #optimal_trip = ns_api.Trip.get_optimal(current_trips, route['time'])
         if not optimal_trip:
-            print "Optimal not found. Alert?"
+            print("Optimal not found. Alert?")
             # TODO: Get the trip before and the one after route['time']?
         else:
             try:
@@ -334,7 +334,7 @@ def get_changed_departures(mc, station, userkey):
     try:
         departures = []
         departures = nsapi.get_departures('Heemskerk')
-        print departures
+        print(departures)
 
     except requests.exceptions.ConnectionError as e:
         #print('[ERROR] connectionerror doing departures')
@@ -486,7 +486,7 @@ def run_all_notifications():
                     if not sendto_channel:
                         logger.error('PushBullet channel configured, but tag "' + settings.pushbullet_channel_tag + '" not found')
                         print('PushBullet channel configured, but tag "' + settings.pushbullet_channel_tag + '" not found')
-            except AttributeError, e:
+            except AttributeError as e:
                 logger.error('PushBullet channel settings not found - ' + str(e))
                 print('PushBullet channel settings not found, see settings_example.py - ' + str(e))
 
