@@ -31,7 +31,7 @@ MEMCACHE_TTL = 3600
 MEMCACHE_VERSIONCHECK_TTL = 3600 * 12
 MEMCACHE_DISABLING_TTL = 3600 * 6
 
-VERSION_NSAPI = '2.7.1'
+VERSION_NSAPI = '2.7.3'
 
 
 ## Helper functions for memcache serialisation
@@ -162,7 +162,7 @@ def format_disruption(disruption):
     """
     Format a disruption on a trajectory
     """
-    return {'timestamp': ns_api.simple_time(disruption.timestamp), 'header': u'Traject: ' + disruption.line, 'message': u'⚠ ' + disruption.reason + "\n" + disruption.message}
+    return {'timestamp': ns_api.datetimeutil.simple_time(disruption.timestamp), 'header': u'Traject: ' + disruption.line, 'message': u'⚠ ' + disruption.reason + "\n" + disruption.message}
     #return {'header': 'Traject: ' + disruption.line, 'message': disruption.reason + "\n" + disruption.message}
 
 
@@ -175,14 +175,14 @@ def format_trip(trip, text_type='long'):
     trip_delay = trip.delay
     message = u''
     if trip_delay['requested_differs']:
-        #message = message + u'↦ ' + ns_api.simple_time(trip_delay['requested_differs']) + u' (' + ns_api.simple_time(trip.requested_time)
-        message = message + u'↦ ' + ns_api.simple_time(trip.requested_time)
+        #message = message + u'↦ ' + ns_api.datetimeutil.simple_time(trip_delay['requested_differs']) + u' (' + ns_api.datetimeutil.simple_time(trip.requested_time)
+        message = message + u'↦ ' + ns_api.datetimeutil.simple_time(trip.requested_time)
     if trip_delay['departure_delay']:
-        #message = message + u' 🕖 ' + ns_api.simple_time(trip_delay['departure_delay']) +")\n"
-        message = message + u' +' + ns_api.simple_time(trip_delay['departure_delay']) +"\n"
+        #message = message + u' 🕖 ' + ns_api.datetimeutil.simple_time(trip_delay['departure_delay']) +")\n"
+        message = message + u' +' + ns_api.datetimeutil.simple_time(trip_delay['departure_delay']) +"\n"
     if trip.arrival_time_actual != trip.arrival_time_planned:
-        #message = message + u'⇥ ' + ns_api.simple_time(trip.arrival_time_actual) + u' (' + ns_api.simple_time(trip.arrival_time_planned) + u' 🕖 ' + ns_api.simple_time(trip.arrival_time_actual - trip.arrival_time_planned) + ")\n"
-        message = message + u'⇥ ' + ns_api.simple_time(trip.arrival_time_planned) + u' +' + ns_api.simple_time(trip.arrival_time_actual - trip.arrival_time_planned) + "\n"
+        #message = message + u'⇥ ' + ns_api.datetimeutil.simple_time(trip.arrival_time_actual) + u' (' + ns_api.datetimeutil.simple_time(trip.arrival_time_planned) + u' 🕖 ' + ns_api.datetimeutil.simple_time(trip.arrival_time_actual - trip.arrival_time_planned) + ")\n"
+        message = message + u'⇥ ' + ns_api.datetimeutil.simple_time(trip.arrival_time_planned) + u' +' + ns_api.datetimeutil.simple_time(trip.arrival_time_actual - trip.arrival_time_planned) + "\n"
 
     if trip.trip_remarks:
         for remark in trip.trip_remarks:
@@ -194,15 +194,15 @@ def format_trip(trip, text_type='long'):
     subtrips = []
     for part in trip.trip_parts:
         if part.has_delay:
-            #subtrips.append(part.transport_type + ' naar ' + part.destination + ' van ' + ns_api.simple_time(part.departure_time) + ' vertrekt van spoor ' + part.stops[0].platform)
-            subtrips.append(part.transport_type + ' naar ' + part.destination + ' van ' + ns_api.simple_time(part.departure_time) + ' (spoor ' + part.stops[0].platform + ')')
+            #subtrips.append(part.transport_type + ' naar ' + part.destination + ' van ' + ns_api.datetimeutil.simple_time(part.departure_time) + ' vertrekt van spoor ' + part.stops[0].platform)
+            subtrips.append(part.transport_type + ' naar ' + part.destination + ' van ' + ns_api.datetimeutil.simple_time(part.departure_time) + ' (spoor ' + part.stops[0].platform + ')')
             for stop in part.stops:
                 if stop.delay:
-                    #subtrips.append('Stop ' + stop.name + ' @ ' + ns_api.simple_time(stop.time) + ' ' + stop.delay)
-                    subtrips.append(u'🚉 ' + stop.name + ' @ ' + ns_api.simple_time(stop.time) + ' ' + stop.delay)
+                    #subtrips.append('Stop ' + stop.name + ' @ ' + ns_api.datetimeutil.simple_time(stop.time) + ' ' + stop.delay)
+                    subtrips.append(u'🚉 ' + stop.name + ' @ ' + ns_api.datetimeutil.simple_time(stop.time) + ' ' + stop.delay)
     message = message + u'\n'.join(subtrips)
     message = message + '\n\n(ns-notifier)'
-    return {'header': trip.trip_parts[0].transport_type + ' ' + trip.departure + '-' + trip.destination + ' (' + ns_api.simple_time(trip.requested_time) + ')', 'message': message}
+    return {'header': trip.trip_parts[0].transport_type + ' ' + trip.departure + '-' + trip.destination + ' (' + ns_api.datetimeutil.simple_time(trip.requested_time) + ')', 'message': message}
 
 
 ## Retrieval
