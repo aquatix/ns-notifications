@@ -57,11 +57,14 @@ def get_repo_version():
     Get the current version on GitHub
     """
     url = 'https://raw.githubusercontent.com/aquatix/ns-notifications/master/VERSION'
-    response = requests.get(url)
-    if response.status_code == 404:
+    try:
+        response = requests.get(url)
+        if response.status_code != 404:
+            return response.text.replace('\n', '')
+    except requests.exceptions.ConnectionError:
+        #return -1
         return None
-    else:
-        return response.text.replace('\n', '')
+    return None
 
 
 def get_local_version():
@@ -82,7 +85,10 @@ def check_versions(mc):
     if not version:
         version = get_repo_version()
         current_version = get_local_version()
-        if version != current_version:
+        if not version:
+            # 404 or timeout on remote VERSION file, refresh with current_version
+            mc.set('ns-notifier_version', current_version, MEMCACHE_VERSIONCHECK_TTL)
+        elif version != current_version:
             message['message'] = 'Current version: ' + str(current_version) + '\nNew version: ' + str(version)
             mc.set('ns-notifier_version', version, MEMCACHE_VERSIONCHECK_TTL)
 
