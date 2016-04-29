@@ -308,7 +308,7 @@ def get_changed_trips(mc, nsapi, routes, userkey):
             keyword = None
         current_trips = nsapi.get_trips(route['time'], route['departure'], keyword, route['destination'], True)
         optimal_trip = ns_api.Trip.get_actual(current_trips, route['time'])
-        #optimal_trip = ns_api.Trip.get_optimal(current_trips, route['time'])
+        #optimal_trip = ns_api.Trip.get_optimal(current_trips)
         if not optimal_trip:
             print("Optimal not found. Alert?")
             # TODO: Get the trip before and the one after route['time']?
