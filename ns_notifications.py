@@ -10,6 +10,7 @@ from pymemcache.client import Client as MemcacheClient
 import datetime
 import json
 import requests
+import socket
 import __main__ as main
 import logging
 import sys
@@ -32,6 +33,10 @@ MEMCACHE_VERSIONCHECK_TTL = 3600 * 12
 MEMCACHE_DISABLING_TTL = 3600 * 6
 
 VERSION_NSAPI = '2.7.3'
+
+
+class MemcachedNotInstalledException(Exception):
+    pass
 
 
 ## Helper functions for memcache serialisation
@@ -81,7 +86,10 @@ def check_versions(mc):
     """
     message = {'header': 'ns-notifications needs updating', 'message': None}
     current_version = None
-    version = mc.get('ns-notifier_version')
+    try:
+        version = mc.get('ns-notifier_version')
+    except socket.error:
+        raise MemcachedNotInstalledException
     if not version:
         version = get_repo_version()
         current_version = get_local_version()
