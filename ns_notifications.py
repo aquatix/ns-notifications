@@ -249,20 +249,8 @@ def get_changed_disruptions(mc, disruptions):
     if prev_disruptions == None or prev_disruptions == []:
         prev_disruptions = {'unplanned': [], 'planned': []}
 
-    #print prev_disruptions['unplanned']
-    #prev_disruptions['unplanned'] = ns_api.list_from_json(prev_disruptions['unplanned'])
     prev_disruptions_unplanned = ns_api.list_from_json(prev_disruptions['unplanned'])
-    #prev_disruptions['planned'] = ns_api.list_from_json(prev_disruptions['planned'])
-
-    #new_or_changed_unplanned = ns_api.list_diff(prev_disruptions['unplanned'], disruptions['unplanned'])
     new_or_changed_unplanned = ns_api.list_diff(prev_disruptions_unplanned, disruptions['unplanned'])
-    #print('New or changed unplanned disruptions:')
-    #print(new_or_changed_unplanned)
-
-    #unchanged_unplanned = ns_api.list_same(prev_disruptions['unplanned'], disruptions['unplanned'])
-
-    #prev_unplanned = new_or_changed_unplanned + unchanged_unplanned
-    #prev_unplanned = new_or_changed_unplanned + prev_disruptions_unplanned
     save_unplanned = ns_api.list_merge(prev_disruptions_unplanned, new_or_changed_unplanned)
 
     # Planned disruptions don't have machine-readable date/time and route information, so
@@ -278,8 +266,6 @@ def get_changed_disruptions(mc, disruptions):
     #prev_planned = new_or_changed_planned + unchanged_planned
 
     # Update the cached list with the current information
-    #mc.set('prev_disruptions', {'unplanned': ns_api.list_to_json(prev_unplanned), 'planned': []})
-    #mc.set('prev_disruptions', {'unplanned': ns_api.list_to_json(disruptions['unplanned']), 'planned': []}, MEMCACHE_TTL)
     mc.set('prev_disruptions', {'unplanned': ns_api.list_to_json(save_unplanned), 'planned': []}, MEMCACHE_TTL)
     return new_or_changed_unplanned
 
