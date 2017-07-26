@@ -253,6 +253,17 @@ def get_changed_disruptions(mc, disruptions):
     new_or_changed_unplanned = ns_api.list_diff(prev_disruptions_unplanned, disruptions['unplanned'])
     save_unplanned = ns_api.list_merge(prev_disruptions_unplanned, new_or_changed_unplanned)
 
+    try:
+        keywordfilter = settings.keywordfilter
+    except AttributeError:
+        keywordfilter = []
+    # filter away on keyword
+    save_unplanned_filtered = []
+    for item in save_unplanned:
+        for keyword in keywordfilter:
+            if keyword not in item:
+                save_unplanned_filtered.append(item)
+
     # Planned disruptions don't have machine-readable date/time and route information, so
     # we skip planned disruptions for this moment
     #new_or_changed_planned = ns_api.list_diff(prev_disruptions['planned'], disruptions['planned'])
@@ -266,7 +277,7 @@ def get_changed_disruptions(mc, disruptions):
     #prev_planned = new_or_changed_planned + unchanged_planned
 
     # Update the cached list with the current information
-    mc.set('prev_disruptions', {'unplanned': ns_api.list_to_json(save_unplanned), 'planned': []}, MEMCACHE_TTL)
+    mc.set('prev_disruptions', {'unplanned': ns_api.list_to_json(save_unplanned_filtered), 'planned': []}, MEMCACHE_TTL)
     return new_or_changed_unplanned
 
 
