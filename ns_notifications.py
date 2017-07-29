@@ -315,8 +315,9 @@ def get_changed_trips(mc, nsapi, routes, userkey):
         optimal_trip = ns_api.Trip.get_actual(current_trips, route['time'])
         #optimal_trip = ns_api.Trip.get_optimal(current_trips)
         if not optimal_trip:
-            print("Optimal not found. Alert?")
+            #print("Optimal not found. Alert?")
             # TODO: Get the trip before and the one after route['time']?
+            pass
         else:
             try:
                 # User set a minimum treshold for departure, skip if within this limit
