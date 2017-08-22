@@ -1,4 +1,5 @@
 import logging
+import os
 from pymemcache.client import Client as MemcacheClient
 from flask import Flask
 from flask import jsonify
@@ -29,8 +30,14 @@ logger.addHandler(ch)
 mc = MemcacheClient(('127.0.0.1', 11211), serializer=json_serializer,
         deserializer=json_deserializer)
 
+
 @app.route('/')
-def nsapi_status():
+def index():
+    return ''
+
+
+@app.route('/<userkey>/')
+def nsapi_status(userkey):
     logger.info('[%s][status] nsapi_run: %s', request.remote_addr, mc.get('nsapi_run'))
     result = []
     result.append('<html><head><title>NS Storingen</title></head><body>')
@@ -79,7 +86,8 @@ def nsapi_status():
     result.append('</body></html>')
     return u'\n'.join(result)
 
-@app.route('/disable/<location>')
+
+@app.route('/userkey/disable/<location>')
 def disable_notifier(location=None):
     location_prefix = '[{0}][location: {1}]'.format(request.remote_addr, location)
     try:
@@ -90,7 +98,8 @@ def disable_notifier(location=None):
     mc.set('nsapi_run', False, MEMCACHE_DISABLING_TTL)
     return 'Disabling notifications'
 
-@app.route('/enable/<location>')
+
+@app.route('/userkey/enable/<location>')
 def enable_notifier(location=None):
     location_prefix = '[{0}][location: {1}]'.format(request.remote_addr, location)
     try:
@@ -100,6 +109,7 @@ def enable_notifier(location=None):
         logger.info('%s no nsapi_run tuple in memcache, creating with value True' % location_prefix)
     mc.set('nsapi_run', True, MEMCACHE_DISABLING_TTL)
     return 'Enabling notifications'
+
 
 if __name__ == '__main__':
     # Run on public interface (!) on non-80 port

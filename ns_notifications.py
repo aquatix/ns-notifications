@@ -109,6 +109,11 @@ def check_versions(mc):
     return message
 
 
+def generate_userkey():
+    """Generate a key to use as userkey"""
+    return os.urandom(24).encode('hex')
+
+
 ## Often-used handles
 def get_logger():
     """
