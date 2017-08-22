@@ -4,16 +4,19 @@
 #
 #    pip-compile --output-file requirements.txt requirements.in
 #
-backports.ssl-match-hostname==3.5.0.1  # via websocket-client
+certifi==2017.7.27.1      # via requests
+chardet==3.0.4            # via requests
 click==6.7
 future==0.16.0            # via nsapi, utilkit
+idna==2.6                 # via requests
 nsapi==2.7.4
-pushbullet.py==0.10.0
-pymemcache==1.4.2
-python-magic==0.4.12      # via pushbullet.py
-pytz==2016.10             # via nsapi, utilkit
-requests==2.13.0
+pushbullet.py==0.11.0
+pymemcache==1.4.3
+python-magic==0.4.13      # via pushbullet.py
+pytz==2017.2              # via nsapi, utilkit
+requests==2.18.4
 six==1.10.0               # via pymemcache, websocket-client
+urllib3==1.22             # via requests
 utilkit==0.4.0            # via nsapi
-websocket-client==0.40.0  # via pushbullet.py
-xmltodict==0.10.2         # via nsapi
+websocket-client==0.44.0  # via pushbullet.py
+xmltodict==0.11.0         # via nsapi
