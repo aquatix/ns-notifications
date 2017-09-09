@@ -1,9 +1,7 @@
 import logging
 import os
 from pymemcache.client import Client as MemcacheClient
-from flask import Flask
-from flask import jsonify
-from flask import request
+from flask import Flask, jsonify, request, render_template
 from werkzeug.debug import get_current_traceback
 from ns_notifications import *
 
@@ -29,6 +27,11 @@ logger.addHandler(ch)
 # Connect to the Memcache daemon
 mc = MemcacheClient(('127.0.0.1', 11211), serializer=json_serializer,
         deserializer=json_deserializer)
+
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html', error=e), 404
 
 
 @app.route('/')
@@ -85,6 +88,19 @@ def nsapi_status(userkey):
         #abort(500)
     result.append('</body></html>')
     return u'\n'.join(result)
+
+
+@app.route('/<userkey>/listroutes')
+def list_routes(userkey):
+    """List all routes (trajectories) in the user's settings, including some info on them"""
+    data = {}
+    return render_template('routes.html', data)
+
+
+@app.route('/<userkey>/nearby/<lat>/<lon>/json')
+def get_nearby_stations(userkey, lat, lon):
+    """Look up nearby stations based on lat lon coordinates"""
+    return jsonify({'message': 'Not implemented yet'})
 
 
 @app.route('/userkey/disable/<location>')
