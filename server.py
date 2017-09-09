@@ -42,15 +42,15 @@ def index():
 @app.route('/<userkey>/')
 def nsapi_status(userkey):
     logger.info('[%s][status] nsapi_run: %s', request.remote_addr, mc.get('nsapi_run'))
-    result = []
-    result.append('<html><head><title>NS Storingen</title></head><body>')
-    result.append('<h2>NS api status</h2>')
+    result = {}
+    #result.append('<html><head><title>NS Storingen</title></head><body>')
+    #result.append('<h2>NS api status</h2>')
     try:
         should_run = mc.get('nsapi_run')
-        result.append("nsapi_run: %s" % mc['nsapi_run'])
+        result['nsapi_run'] = "%s" % mc['nsapi_run']
     except KeyError:
-        result.append("nsapi_run not found")
-    result.append('<h2>Disruptions</h2>')
+        result['nsapi_run'] = "nsapi_run not found"
+    result['disruptions'] = []
     try:
         prev_disruptions = mc.get('prev_disruptions')
         disruptions = ns_api.list_from_json(prev_disruptions['unplanned'])
@@ -65,12 +65,13 @@ def nsapi_status(userkey):
             else:
                 result.append('<pre>Nothing to see here</pre>')
     except TypeError:
-        result.append('No disruptions found')
+        #result.append('No disruptions found')
         track = get_current_traceback(skip=1, show_hidden_frames=True,
                                       ignore_system_exceptions=False)
         track.log()
         #abort(500)
-    result.append('<h2>Delays</h2>')
+    #result.append('<h2>Delays</h2>')
+    result['delays'] = []
     try:
         prev_delays = mc.get('1_trips')
         delays = ns_api.list_from_json(prev_delays)
@@ -81,20 +82,21 @@ def nsapi_status(userkey):
             result.append('<h3>' + message['header'] + '</h3>')
             result.append('<pre>' + message['message'] + '</pre>')
     except TypeError:
-        result.append('No trips found')
+        #result.append('No trips found')
         track = get_current_traceback(skip=1, show_hidden_frames=True,
                                       ignore_system_exceptions=False)
         track.log()
         #abort(500)
-    result.append('</body></html>')
-    return u'\n'.join(result)
+    #result.append('</body></html>')
+    #return u'\n'.join(result)
+    return render_template('status.html', content=result)
 
 
 @app.route('/<userkey>/listroutes')
 def list_routes(userkey):
     """List all routes (trajectories) in the user's settings, including some info on them"""
     data = {}
-    return render_template('routes.html', data)
+    return render_template('routes.html', data=data)
 
 
 @app.route('/<userkey>/nearby/<lat>/<lon>/json')
@@ -129,5 +131,4 @@ def enable_notifier(location=None):
 
 if __name__ == '__main__':
     # Run on public interface (!) on non-80 port
-    app.debug = True
-    app.run(host='0.0.0.0', port=8086)
+    app.run(host='0.0.0.0', port=8086, debug=True)
