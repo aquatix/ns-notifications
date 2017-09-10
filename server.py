@@ -105,8 +105,8 @@ def get_nearby_stations(userkey, lat, lon):
     return jsonify({'message': 'Not implemented yet'})
 
 
-@app.route('/userkey/disable/<location>')
-def disable_notifier(location=None):
+@app.route('/<userkey>/disable/<location>')
+def disable_notifier(userkey, location=None):
     location_prefix = '[{0}][location: {1}]'.format(request.remote_addr, location)
     try:
         should_run = mc.get('nsapi_run')
@@ -117,8 +117,8 @@ def disable_notifier(location=None):
     return 'Disabling notifications'
 
 
-@app.route('/userkey/enable/<location>')
-def enable_notifier(location=None):
+@app.route('/<userkey>/enable/<location>')
+def enable_notifier(userkey, location=None):
     location_prefix = '[{0}][location: {1}]'.format(request.remote_addr, location)
     try:
         should_run = mc.get('nsapi_run')
