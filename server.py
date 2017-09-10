@@ -96,6 +96,10 @@ def nsapi_status(userkey):
 def list_routes(userkey):
     """List all routes (trajectories) in the user's settings, including some info on them"""
     data = {}
+    try:
+        data['routegroups'] = settings.userconfigs[userkey]['routegroups']
+    except KeyError:
+        data['message'] = 'No configuration found for this userkey'
     return render_template('routes.html', data=data)
 
 

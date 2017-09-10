@@ -9,7 +9,18 @@
     </div>
 </div>
 
-{% for section in data.sections %}
+{% for routegroup in data.routegroups %}
+
+<h3>{{ routegroup }}</h3>
+
+<p>Enabled: {{ data.routegroups[routegroup]['enabled'] }}</p>
+<p>Days: {{ data.routegroups[routegroup]['days'] }}</p>
+
+{% for route in data.routegroups[routegroup]['routes'] %}
+
+<li>{{ route }}</li>
+
+{% endfor %}
 
 
 {% endfor %}
