@@ -133,6 +133,25 @@ def get_logger():
     return logger
 
 
+def get_routegroups_for_user(userkey):
+    return settings.userconfigs[userkey]['routegroups']
+
+
+def get_all_enabled_routes(disabled = None, today = None):
+    """Get all routes that need checking"""
+    routes = []
+    if not today:
+        today = datetime.date.weekday()  # Monday = 0
+    for userconfig in settings.userconfigs:
+        for group in settings.userconfigs[userconfig]['routegroups']:
+            if userconfig in disabled and group in disabled[userconfig]:
+                # Skip this routegroup, as it was explicitely disabled
+                continue
+            if today in group['days']:
+                routes.append(group['routes'])
+    return routes
+
+
 def get_pushbullet_config(logger=None):
     """
     Return PushBullet handle and device to send to
