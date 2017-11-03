@@ -2,18 +2,20 @@
 """
 NS trip notifier
 """
-import ns_api
-import click
-from pushbullet import PushBullet
-import pushbullet
-from pymemcache.client import Client as MemcacheClient
 import datetime
 import json
-import requests
-import __main__ as main
 import logging
-import sys
 import os
+import sys
+
+import click
+import ns_api
+import pushbullet
+import requests
+from pushbullet import PushBullet
+from pymemcache.client import Client as MemcacheClient
+
+import __main__ as main
 
 try:
     import settings

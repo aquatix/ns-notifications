@@ -1,8 +1,10 @@
 import logging
 import os
+
+from flask import Flask, jsonify, render_template, request
 from pymemcache.client import Client as MemcacheClient
-from flask import Flask, jsonify, request, render_template
 from werkzeug.debug import get_current_traceback
+
 from ns_notifications import *
 
 app = Flask(__name__)
