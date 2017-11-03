@@ -1,2 +1,3 @@
--r requirements.in
+-r requirements_server.in
+
 pylint
