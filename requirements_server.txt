@@ -7,6 +7,6 @@
 click==6.7                # via flask
 flask==0.12.2
 itsdangerous==0.24        # via flask
-jinja2==2.9.6             # via flask
+jinja2==2.10
 markupsafe==1.0           # via jinja2
 werkzeug==0.12.2          # via flask
