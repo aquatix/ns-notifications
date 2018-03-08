@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
     <head>
-        <title>{% block title %}{% endblock %} - NS notifications</title>
+        <title>{% block title %}{% endblock %} - NS updates</title>
 
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
@@ -17,8 +17,8 @@
 
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
         <link href='https://fonts.googleapis.com/css?family=Roboto+Mono&subset=latin,latin-ext' rel='stylesheet' type='text/css'>
-        <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css" type="text/css" rel="stylesheet" media="screen,projection"/>
-        <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0-alpha.4/css/materialize.min.css" type="text/css" rel="stylesheet" media="screen,projection"/>
+        <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
     </head>
     <body class="grey lighten-5 grey-text text-darken-5">
         <nav class="yellow" role="navigation">
@@ -31,7 +31,7 @@
                 </ul>
 
                 {% if userkey %}
-                <ul id="nav-mobile" class="side-nav">
+                <ul id="nav-mobile" class="sidenav">
                     <li><a class="waves-effect" href="{{ url_for('bookmarks', userkey=userkey) }}"><i class="material-icons">turned_in</i>Home</a></li>
                     <li><a class="waves-effect" href="{{ url_for('tags', userkey=userkey) }}"><i class="material-icons">label</i>Tags</a></li>
                     <li><a class="waves-effect" href="{{ url_for('addbookmark', userkey=userkey) }}"><i class="material-icons">add</i>Add bookmark</a></li>
@@ -55,7 +55,7 @@
         </div>
 
         <!-- Scripts -->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0-alpha.4/js/materialize.min.js"></script>
         <script src="{{ url_for('static', filename='js/init.js') }}"></script>
 
     </body>
