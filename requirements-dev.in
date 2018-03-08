@@ -1,3 +1,4 @@
--r requirements_server.in
+-r requirements.in
 
+bpython
 pylint

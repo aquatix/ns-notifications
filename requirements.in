@@ -1,5 +1,8 @@
-click
-nsapi>=2.7.3
+nsapi>=2.7.4
 pushbullet.py
 pymemcache
 requests
+
+# Webservice
+Flask
+Jinja2
