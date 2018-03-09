@@ -1,3 +1,6 @@
+"""
+NS/public transports delay/disruption API
+"""
 import logging
 import os
 
@@ -41,8 +44,13 @@ def index():
     return ''
 
 
+@app.route('/api/')
+def api_index():
+    return jsonify({'message': 'Oh, hai!'})
+
+
 @app.route('/<userkey>/')
-def nsapi_status(userkey):
+def user_dashboard(userkey):
     logger.info('[%s][status] nsapi_run: %s', request.remote_addr, mc.get('nsapi_run'))
     result = {}
     #result.append('<html><head><title>NS Storingen</title></head><body>')
@@ -59,13 +67,7 @@ def nsapi_status(userkey):
         for disruption in disruptions:
             message = format_disruption(disruption)
             logger.debug(message)
-            result.append(u'<h3>' + message['header'] + '</h3>')
-            if message['message']:
-                if message['timestamp']:
-                    result.append('<p>' + message['timestamp'] + '</p>')
-                result.append('<pre>' + message['message'] + '</pre>')
-            else:
-                result.append('<pre>Nothing to see here</pre>')
+            disruptions.append(message)
     except TypeError:
         #result.append('No disruptions found')
         track = get_current_traceback(skip=1, show_hidden_frames=True,
@@ -79,10 +81,8 @@ def nsapi_status(userkey):
         delays = ns_api.list_from_json(prev_delays)
         for delay in delays:
             message = format_trip(delay)
-            if not message['message']:
-                message['message'] = 'Geen bijzonderheden'
-            result.append('<h3>' + message['header'] + '</h3>')
-            result.append('<pre>' + message['message'] + '</pre>')
+            if message['message']:
+                result['delays'].append(message)
     except TypeError:
         #result.append('No trips found')
         track = get_current_traceback(skip=1, show_hidden_frames=True,
@@ -94,6 +94,52 @@ def nsapi_status(userkey):
     return render_template('status.html', content=result)
 
 
+@app.route('/api/<userkey>/')
+def api_user(userkey):
+    return jsonify({})
+
+
+@app.route('/api/<userkey>/listroutes')
+def api_list_routes(userkey):
+    """List all routes (trajectories) in the user's settings, including some info on them"""
+    data = {}
+    try:
+        data['routegroups'] = settings.userconfigs[userkey]['routegroups']
+    except KeyError:
+        data['message'] = 'No configuration found for this userkey'
+    return jsonify(data)
+
+
+@app.route('/api/<userkey>/nearby/<lat>/<lon>/json')
+def get_nearby_stations(userkey, lat, lon):
+    """Look up nearby stations based on lat lon coordinates"""
+    return jsonify({'message': 'Not implemented yet'})
+
+
+@app.route('/api/<userkey>/disable/<location>')
+def disable_notifier(userkey, location=None):
+    location_prefix = '[{0}][location: {1}]'.format(request.remote_addr, location)
+    try:
+        should_run = mc.get('nsapi_run')
+        logger.info('%s nsapi_run was %s, disabling' % (location_prefix, should_run))
+    except KeyError:
+        logger.info('%s no nsapi_run tuple in memcache, creating with value False' % location_prefix)
+    mc.set('nsapi_run', False, MEMCACHE_DISABLING_TTL)
+    return jsonify({'message': 'Disabling notifications', 'location': location})
+
+
+@app.route('/api/<userkey>/enable/<location>')
+def enable_notifier(userkey, location=None):
+    location_prefix = '[{0}][location: {1}]'.format(request.remote_addr, location)
+    try:
+        should_run = mc.get('nsapi_run')
+        logger.info('%s nsapi_run was %s, enabling' % (location_prefix, should_run))
+    except KeyError:
+        logger.info('%s no nsapi_run tuple in memcache, creating with value True' % location_prefix)
+    mc.set('nsapi_run', True, MEMCACHE_DISABLING_TTL)
+    return jsonify({'message': 'Enabling notifications', 'location': location})
+
+
 @app.route('/<userkey>/listroutes')
 def list_routes(userkey):
     """List all routes (trajectories) in the user's settings, including some info on them"""
@@ -103,36 +149,6 @@ def list_routes(userkey):
     except KeyError:
         data['message'] = 'No configuration found for this userkey'
     return render_template('routes.html', data=data)
-
-
-@app.route('/<userkey>/nearby/<lat>/<lon>/json')
-def get_nearby_stations(userkey, lat, lon):
-    """Look up nearby stations based on lat lon coordinates"""
-    return jsonify({'message': 'Not implemented yet'})
-
-
-@app.route('/<userkey>/disable/<location>')
-def disable_notifier(userkey, location=None):
-    location_prefix = '[{0}][location: {1}]'.format(request.remote_addr, location)
-    try:
-        should_run = mc.get('nsapi_run')
-        logger.info('%s nsapi_run was %s, disabling' % (location_prefix, should_run))
-    except KeyError:
-        logger.info('%s no nsapi_run tuple in memcache, creating with value False' % location_prefix)
-    mc.set('nsapi_run', False, MEMCACHE_DISABLING_TTL)
-    return 'Disabling notifications'
-
-
-@app.route('/<userkey>/enable/<location>')
-def enable_notifier(userkey, location=None):
-    location_prefix = '[{0}][location: {1}]'.format(request.remote_addr, location)
-    try:
-        should_run = mc.get('nsapi_run')
-        logger.info('%s nsapi_run was %s, enabling' % (location_prefix, should_run))
-    except KeyError:
-        logger.info('%s no nsapi_run tuple in memcache, creating with value True' % location_prefix)
-    mc.set('nsapi_run', True, MEMCACHE_DISABLING_TTL)
-    return 'Enabling notifications'
 
 
 if __name__ == '__main__':
