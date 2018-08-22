@@ -2,13 +2,10 @@
 NS/public transports delay/disruption API
 """
 import logging
-import os
 
 from flask import Flask, jsonify, render_template, request
 from pymemcache.client import Client as MemcacheClient
 from werkzeug.debug import get_current_traceback
-
-from ns_notifications import *
 
 app = Flask(__name__)
 

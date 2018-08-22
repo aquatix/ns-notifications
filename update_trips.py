@@ -1,6 +1,6 @@
  # -*- coding: utf-8 -*-
 """
-NS trip information
+NS trip information updater
 """
 import ns_api
 import click
@@ -30,8 +30,6 @@ MEMCACHE_TTL = 3600
 MEMCACHE_VERSIONCHECK_TTL = 3600 * 12
 MEMCACHE_DISABLING_TTL = 3600 * 6
 
-VERSION_NSAPI = '2.7.4'
-
 
 class MemcachedNotInstalledException(Exception):
     pass
@@ -52,67 +50,6 @@ def json_deserializer(key, value, flags):
     if flags == 2:
         return json.loads(value)
     raise Exception("Unknown serialization format")
-
-
-## Check for an update of the notifier
-def get_repo_version():
-    """
-    Get the current version on GitHub
-    """
-    url = 'https://raw.githubusercontent.com/aquatix/ns-notifications/master/VERSION'
-    try:
-        response = requests.get(url)
-        if response.status_code != 404:
-            return response.text.replace('\n', '')
-    except requests.exceptions.ConnectionError:
-        #return -1
-        return None
-    return None
-
-
-def get_local_version():
-    """
-    Get the locally installed version
-    """
-    with open ("VERSION", "r") as versionfile:
-        return versionfile.read().replace('\n', '')
-
-
-def check_versions(mc):
-    """
-    Check whether version of ns-notifier is up-to-date and ns-api is latest version too
-    """
-    message = {'header': 'ns-notifications needs updating', 'message': None}
-    current_version = None
-    try:
-        version = mc.get('ns-notifier_version')
-    except socket.error:
-        raise MemcachedNotInstalledException
-    if not version:
-        version = get_repo_version()
-        current_version = get_local_version()
-        if not version:
-            # 404 or timeout on remote VERSION file, refresh with current_version
-            mc.set('ns-notifier_version', current_version, MEMCACHE_VERSIONCHECK_TTL)
-        elif version != current_version:
-            message['message'] = 'Current version: ' + str(current_version) + '\nNew version: ' + str(version)
-            mc.set('ns-notifier_version', version, MEMCACHE_VERSIONCHECK_TTL)
-
-    version = mc.get('ns-api_version')
-    if not version:
-        if ns_api.__version__ != VERSION_NSAPI:
-            # ns-api needs updating
-            if message['message']:
-                message['message'] = message['message'] + '\n'
-            else:
-                message['message'] = ''
-            message['message'] = message['message'] + 'ns-api needs updating'
-            mc.set('ns-api_version', VERSION_NSAPI, MEMCACHE_VERSIONCHECK_TTL)
-
-    if not message['message']:
-        # No updating needed, return None object
-        message = None
-    return message
 
 
 ## Often-used handles
@@ -137,7 +74,7 @@ def get_logger():
 ## Retrieval
 def get_stations(mc, nsapi):
     """
-    Get the list of all stations, put in cache if not already there
+    Gets the list of all stations, put in cache if not already there
     """
     try:
         stations = mc.get('stations')
@@ -156,7 +93,7 @@ def get_stations(mc, nsapi):
 
 def update_trips(mc, nsapi, routes, userkey):
     """
-    Get the new or changed trips for userkey
+    Gets up-to-date information on trips for `userkey`
     """
     today = datetime.datetime.now().strftime('%d-%m')
     today_date = datetime.datetime.now().strftime('%d-%m-%Y')
@@ -210,26 +147,12 @@ def update_trips(mc, nsapi, routes, userkey):
     return new_or_changed_trips
 
 
-def get_changed_departures(mc, station, userkey):
-
-    try:
-        departures = []
-        departures = nsapi.get_departures('Heemskerk')
-        print(departures)
-
-    except requests.exceptions.ConnectionError as e:
-        #print('[ERROR] connectionerror doing departures')
-        errors.append(('Exception doing departures', e))
-
-
 ## Main program
 @click.group()
 def cli():
     """
-    NS-Notifications
+    NS trip information updater
     """
-    #run_all_notifications()
-    #print 'right'
     pass
 
 
@@ -237,11 +160,10 @@ if not hasattr(main, '__file__'):
     """
     Running in interactive mode in the Python shell
     """
-    print("NS Notifier running interactively in Python shell")
+    print("NS trip information updater is running interactively in Python shell")
 
 elif __name__ == '__main__':
     """
-    NS Notifier is ran standalone, rock and roll
+    Running stand-alone
     """
     cli()
-    #run_all_notifications()
