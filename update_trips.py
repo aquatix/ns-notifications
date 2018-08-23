@@ -2,17 +2,17 @@
 """
 NS trip information updater
 """
-import ns_api
-import click
-from pymemcache.client import Client as MemcacheClient
 import datetime
 import json
-import requests
-import socket
-import __main__ as main
 import logging
 import sys
-import os
+
+import click
+import ns_api
+import requests
+from pymemcache.client import Client as MemcacheClient
+
+import __main__ as main
 
 try:
     import settings
@@ -44,6 +44,7 @@ def json_serializer(key, value):
     #    return value.to_json(), 3
     return json.dumps(value), 2
 
+
 def json_deserializer(key, value, flags):
     if flags == 1:
         return value
@@ -58,10 +59,10 @@ def get_logger():
     Create logging handler
     """
     ## Create logger
-    logger = logging.getLogger('ns_notifications')
+    logger = logging.getLogger('nsapi_updater')
     logger.setLevel(logging.DEBUG)
     # create file handler which logs even debug messages
-    fh = logging.FileHandler('ns_notifications.log')
+    fh = logging.FileHandler('nsapi_updater.log')
     fh.setLevel(logging.DEBUG)
     # create formatter and add it to the handlers
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -91,11 +92,10 @@ def get_stations(mc, nsapi):
     return stations
 
 
-def update_trips(mc, nsapi, routes, userkey):
+def update_trips_for_user(mc, nsapi, routes, userkey):
     """
     Gets up-to-date information on trips for `userkey`
     """
-    today = datetime.datetime.now().strftime('%d-%m')
     today_date = datetime.datetime.now().strftime('%d-%m-%Y')
     current_time = datetime.datetime.now()
 
@@ -154,6 +154,22 @@ def cli():
     NS trip information updater
     """
     pass
+
+
+@click.command()
+def update_trips():
+    logger = get_logger()
+
+    # Connect to the Memcache daemon
+    mc = MemcacheClient(('127.0.0.1', 11211), serializer=json_serializer,
+                        deserializer=json_deserializer)
+
+    nsapi = ns_api.NSAPI(settings.username, settings.apikey)
+
+    for userkey in settings.userconfigs:
+        userconfig = settings.userconfigs[userkey]
+        logger.debug('Getting trips for user %s', userkey)
+        update_trips_for_user(mc, nsapi, userconfig['routegroups'], userkey)
 
 
 if not hasattr(main, '__file__'):
