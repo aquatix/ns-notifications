@@ -1,6 +1,7 @@
 """
 NS/public transports delay/disruption API
 """
+import json
 import logging
 
 from flask import Flask, jsonify, render_template, request
@@ -26,9 +27,27 @@ ch.setFormatter(formatter)
 logger.addHandler(fh)
 logger.addHandler(ch)
 
+## Helper functions for memcache serialisation
+def json_serializer(key, value):
+    if type(value) == str:
+        return value, 1
+    #if issubclass(value, ns_api.BaseObject):
+    #    print ("instance of NS-API object")
+    #    return value.to_json(), 3
+    return json.dumps(value), 2
+
+
+def json_deserializer(key, value, flags):
+    if flags == 1:
+        return value
+    if flags == 2:
+        return json.loads(value)
+    raise Exception("Unknown serialization format")
+
+
 # Connect to the Memcache daemon
 mc = MemcacheClient(('127.0.0.1', 11211), serializer=json_serializer,
-        deserializer=json_deserializer)
+                    deserializer=json_deserializer)
 
 
 @app.errorhandler(404)
