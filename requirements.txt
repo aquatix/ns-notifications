@@ -4,7 +4,7 @@
 #
 #    pip-compile requirements.in --upgrade
 #
-certifi==2018.11.29       # via requests
+certifi==2019.3.9         # via requests
 chardet==3.0.4            # via requests
 click==7.0
 future==0.17.1            # via nsapi, utilkit
@@ -13,10 +13,10 @@ nsapi==2.7.4
 pushbullet.py==0.11.0
 pymemcache==2.1.1
 python-magic==0.4.15      # via pushbullet.py
-pytz==2018.9              # via nsapi, utilkit
+pytz==2019.1              # via nsapi, utilkit
 requests==2.21.0
 six==1.12.0               # via pymemcache, websocket-client
-urllib3==1.24.1           # via requests
+urllib3==1.24.2           # via requests
 utilkit==0.4.1            # via nsapi
-websocket-client==0.55.0  # via pushbullet.py
+websocket-client==0.56.0  # via pushbullet.py
 xmltodict==0.12.0         # via nsapi
